@@ -159,7 +159,25 @@ echo $?
 
 ### automating the instructions
 
+```
+clear;bash many_gemms.sh 8x672x672wm-n-k_searchSpaceTop3.csv compile no no
+```
+
+```
+clear;bash many_gemms.sh 56x56x56wm-n-k_searchSpaceTop3.csv compile no no
+```
+
+```
+clear;time bash many_gemms.sh 56x56x56wm-n-k_searchSpaceTop3.csv compile run no > 56x56x56-output.txt
+```
+
+
+
+56x56x56wm-n-k_searchSpaceTop3.csv
+
 `/home/hoppip/recent_snitch/snitch_cluster/sw/kernels/blas/gemm/build-yodel/gemm.elf`
+
+`/home/hoppip/recent_snitch/snitch_cluster/8x672x672wm-n-k_searchSpaceTop3.csv`
 
 ```
 ../sw/kernels/blas/gemm/scripts/verify.py snitch_cluster.vlt ../sw/kernels/blas/gemm/build/gemm.elf
