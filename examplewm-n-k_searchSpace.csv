@@ -1,0 +1,4 @@
+FakeNN JSON Name,M,N,K,m,n,k,JSON Name,Reduction Dim,Row Dim,Space Needed in L1,m Dim,Weight Matrix Tile Size,Space Remaining
+32x16x16w32-16-16,32,16,16,32,16,16,32-16-16,23,40,24504,1,14720,75496
+32x16x16w16-8-8,32,16,16,16,8,8,16-8-8,23,80,39224,1,29440,60776
+32x16x16w8-8-8,32,16,16,8,8,8,8-8-8,23,200,83384,1,73600,16616
