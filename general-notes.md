@@ -160,6 +160,19 @@ echo $?
 ### automating the instructions
 
 ```
+clear;bash many_gemms.sh 56x56x56w56-28-28.csv compile run no
+```
+
+
+
+```
+clear;bash many_gemms.sh 56x56x56wm-n-k_searchSpaceNOTILING.csv compile run no
+```
+```
+clear;bash many_gemms.sh MxNxKwm-n-k_searchSpaceRequiresTiling.csv compile no no
+```
+
+```
 clear;bash many_gemms.sh 8x672x672wm-n-k_searchSpaceTop3.csv compile no no
 ```
 

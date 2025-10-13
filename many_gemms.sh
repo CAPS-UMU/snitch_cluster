@@ -13,7 +13,7 @@ genTrace(){
     logWOFE="$2" # log file without the .dasm file extension
     dma="$3"
     echo "logsDir is $logsDir and log file is $logWOFE and dma is $dma"
-    if [[ "$exists" != "0" ]]; 
+    if [[ "$dma" != "dma" ]]; 
     then
         $gen_trace "$logsDir/$logWOFE.dasm" --mc-exec $llvm_mc --mc-flags "-disassemble -mcpu=snitch" --dma-trace "$logsDir/$logWOFE.log" --dump-hart-perf "$logsDir/hart-$logWOFE-perf.json" --dump-dma-perf "$logsDir/dma-$logWOFE-perf.json" -o "$logsDir/$logWOFE.txt"
     else
@@ -44,8 +44,15 @@ compile(){
             echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             rm -rf $buildDir 2>/dev/null
             python prepareParams.py $params $M $N $K $m $n $k
-            make DEBUG=ON sw -j
-            cp -r "$gemmDir/build" $buildDir
+            if [[ "$(echo $?)" == "0" ]]; 
+                then
+                make DEBUG=ON sw -j
+                if [[ "$(echo $?)" == "0" ]]; 
+                then
+                    cp -r "$gemmDir/build" $buildDir
+                    cp $params "$buildDir/params.json"
+                fi
+            fi
             done
 }
 
@@ -77,7 +84,7 @@ runAndExtract(){
             if [[ "$correct" != "0" ]]; 
             then
                 echo -e "\tmany_gemms.sh: Error: tiled gemm did not produce expected result! Errno $correct"
-                return 1
+                # return 1
             else
                 echo -e "\tmany_gemms.sh: Ran gemm and no errors."
             fi

@@ -39,6 +39,8 @@ def main():
         m=int(sys.argv[5])
         n=int(sys.argv[6])
         k=int(sys.argv[7])
+        if (M % m != 0.0) or (N % n != 0.0) or (K % k != 0.0):
+            raise Exception(f'prepareParams.py: Error: one of the tile sizes {m}, {n}, or {k} does not divide evenly into input size {M}x{N}x{K}')
         m_tiles=int(M/m)
         n_tiles=int(N/n)
         k_tiles=int(K/k)
@@ -65,6 +67,7 @@ def main():
     #   #  data[f'{sys.argv[2]}']["tile-sizes"]=[[0], [int(rowDim)], [int(redDim)]]
         f.write(f"{json.dumps(data)}")
         f.close()  
+        return 0
         # expName=sys.argv[1]
         # logs=sys.argv[2]
         # if not os.path.exists(logs):
