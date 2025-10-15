@@ -60,6 +60,9 @@ runAndExtract(){
     ss="$1"
     echo -e "\tmany_gemms.sh: RUN + EXPORT step"
     uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
+    batchSize=$(nproc)
+    counter=0
+    echo -e "\t\tBatch size is $batchSize"
     for ts in $(grep -oE $uniquePointRegex $ss)
             do
             eatNum='^([0-9])([0-9])*'
@@ -76,40 +79,24 @@ runAndExtract(){
             k=$(echo $tail | grep -oE $eatNum)
             expName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
             buildDir="$gemmDir/"$expName
-            echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             logs="$buildDir/logs"
-            # run gemm
-            cd $buildDir
-            correct=$(../scripts/verify.py snitch_cluster.vlt gemm.elf > verify-output.txt; echo $?)
-            if [[ "$correct" != "0" ]]; 
+            exists=$(ls $buildDir &> /dev/null; echo $?)
+            if [[ "$exists" != "0" ]]; 
             then
-                echo -e "\tmany_gemms.sh: Error: tiled gemm did not produce expected result! Errno $correct"
-                # return 1
+                echo -e "\tmany_gemms.sh: Error: $buildDir dir does not exist. Skipping $M $N $K w $m $n $k."
             else
-                echo -e "\tmany_gemms.sh: Ran gemm and no errors."
-            fi
-
-            # extract timing info
-            genTrace logs "trace_hart_00000"
-            genTrace logs "trace_hart_00001"
-            genTrace logs "trace_hart_00002"
-            genTrace logs "trace_hart_00003"
-            genTrace logs "trace_hart_00004"
-            genTrace logs "trace_hart_00005"
-            genTrace logs "trace_hart_00006"
-            genTrace logs "trace_hart_00007"
-            genTrace logs "trace_hart_00008" dma
-            python $extractKernelTime $expName $logs $M $N $K $m $n $k
-
-            # aggregate timing info into single json
-
-            # delete huge log files
-            cd $logs
-            rm -rf *.dasm
-
-            cd $here
-            
+                echo -e "\t\t About to run $M $N $K $m $n $k with build directory $buildDir"
+                # run gemm
+                nohup bash test.sh $buildDir $extractKernelTime $expName $logs $M $N $K w $m $n $k &> "$buildDir/test.txt" & 
+                # nohup bash run_and_extract_time.sh $buildDir $extractKernelTime $expName $logs $M $N $K w $m $n $k &> "$buildDir/output.txt" & 
+                counter=$((counter+1))
+            fi 
+            if (( $counter % $batchSize == 0 )); then
+                wait
+                echo -e "\t\tstarting new batch..."
+                fi       
             done
+    wait
 }
 
 onlyExtract(){

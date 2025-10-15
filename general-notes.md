@@ -162,7 +162,10 @@ echo $?
 ```
 clear;bash many_gemms.sh 56x56x56w56-28-28.csv compile run no
 ```
-
+For reference:
+```
+nohup bash startNoHangUpRun.sh 40x120x20wm-n-k-fakeNN-1st-vs-8th.csv genJsons compile no no skip &> 40x120x20wm-n-k-fakeNN.output &
+```
 
 
 ```
