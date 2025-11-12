@@ -56,11 +56,84 @@ compile(){
             done
 }
 
+# check status of kernels - are they built? did they run? any errors?
+check(){
+    ss="$1"
+    echo -e "\tmany_gemms.sh: CHECK step"
+    uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
+    for ts in $(grep -oE $uniquePointRegex $ss)
+            do
+            eatNum='^([0-9])([0-9])*'
+            M=$(echo $ts | grep -oE $eatNum)
+            tail=${ts#*x}
+            N=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*x}
+            K=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*w}
+            m=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*-}
+            n=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*-}
+            k=$(echo $tail | grep -oE $eatNum)
+            buildDir="$gemmDir/"$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            logs="$buildDir/logs"
+            buildName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            exists=$(ls $buildDir &> /dev/null; echo $?)
+            if [[ "$exists" != "0" ]]; 
+            then
+                echo -e "\t\t$buildName directory does not exist. Errno $exists"
+            else
+                if [[ $(ls "$logs/$buildName.csv" &> /dev/null; echo $?) != "0" ]];
+                        then
+                            echo -e "\t\t$buildName... No csv with time measurements."
+                            if [[ $(ls "$logs/trace_hart_00000.dasm" &> /dev/null; echo $?) == "0" ]];
+                            then
+                                verifyOutput="sw/kernels/blas/gemm/$buildName/verify-output.txt"
+                                empty="0 $verifyOutput"
+                                if [[ $(wc -l $verifyOutput) == $empty ]];
+                                then
+                                    echo -e "\t\t\t BUT log file exists and verify-output.txt is empty, so maybe still running?"
+                                fi
+                            fi
+                            if [[ $(ls "$buildDir/output.txt" &> /dev/null; echo $?) == "0" ]];
+                            then
+                                
+                                errs=$(cat "$buildDir/output.txt" | grep "rror")
+                                res=$(echo $?)
+                                errs2=$(cat "$buildDir/output.txt" | grep "did not produce expected result!")
+                                res2=$(echo $?)
+                                # errs3=$(cat "$buildDir/output.txt" | grep "ValueError")
+                                # res3=$(echo $?)
+                                if [[ "$res2" == "0" ]];
+                                then
+                                    echo -e "\t\t$errs2"
+                                fi
+                                if [[ "$res" == "0" ]];
+                                then
+                                    
+                                    echo -e "\t\t\t Errors found in output.txt"
+                                fi
+                                # if [[ "$res3" == "0" ]];
+                                # then
+                                #     echo -e "\t\t\t$errs3"
+                                # fi
+                            else
+                                echo -e "\t\toutput.txt does not exist."
+                            fi
+                        else
+                            echo -e "\t\t$buildName... probably OK"
+                fi
+                
+              
+            fi
+            done
+}
+
 runAndExtract(){
     ss="$1"
     echo -e "\tmany_gemms.sh: RUN + EXPORT step"
     uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
-    batchSize=$(nproc)
+    batchSize=5 #$(nproc)
     counter=0
     echo -e "\t\tBatch size is $batchSize"
     for ts in $(grep -oE $uniquePointRegex $ss)
@@ -87,8 +160,8 @@ runAndExtract(){
             else
                 echo -e "\t\t About to run $M $N $K $m $n $k with build directory $buildDir"
                 # run gemm
-                nohup bash test.sh $buildDir $extractKernelTime $expName $logs $M $N $K w $m $n $k &> "$buildDir/test.txt" & 
-                # nohup bash run_and_extract_time.sh $buildDir $extractKernelTime $expName $logs $M $N $K w $m $n $k &> "$buildDir/output.txt" & 
+                # nohup bash test.sh $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k &> "$buildDir/test.txt" & 
+                nohup bash run_and_extract_time.sh $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $here &> "$buildDir/output.txt" & 
                 counter=$((counter+1))
             fi 
             if (( $counter % $batchSize == 0 )); then
@@ -123,14 +196,94 @@ onlyExtract(){
             echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             logs="$buildDir/logs"
             cd $buildDir
+            # genTrace logs "trace_hart_00000"
+            # genTrace logs "trace_hart_00001"
+            # genTrace logs "trace_hart_00002"
+            # genTrace logs "trace_hart_00003"
+            # genTrace logs "trace_hart_00004"
+            genTrace logs "trace_hart_00005"
+            genTrace logs "trace_hart_00006"
+            genTrace logs "trace_hart_00007"
+            genTrace logs "trace_hart_00008" dma
             python $extractKernelTime $expName $logs $M $N $K $m $n $k
             # aggregate timing info into single json
             cd $here            
             done
 }
 
+clear(){
+    ss="$1"
+    echo -e "\tmany_gemms.sh: Clear step"
+    echo -e "\tmany_gemms.sh: WARNING! This deletes ENTIRE BUILD FOLDERS!!"
+    echo -e "\tmany_gemms.sh: If this was a mistake, do CTRL + C now!!"
+    sleep 2
+    uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
+    for ts in $(grep -oE $uniquePointRegex $ss)
+            do
+            eatNum='^([0-9])([0-9])*'
+            M=$(echo $ts | grep -oE $eatNum)
+            tail=${ts#*x}
+            N=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*x}
+            K=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*w}
+            m=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*-}
+            n=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*-}
+            k=$(echo $tail | grep -oE $eatNum)
+            buildDir="$gemmDir/"$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            logs="$buildDir/logs"
+            buildName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            exists=$(ls $buildDir &> /dev/null; echo $?)
+            if [[ "$exists" != "0" ]]; 
+            then
+                echo -e "\t\t$buildName directory does not exist. Errno $exists"
+            else
+                rm -rf $buildDir    
+            fi
+            done
+}
+
+clearLogs(){
+    ss="$1"
+    echo -e "\tmany_gemms.sh: Clear step"
+    echo -e "\tmany_gemms.sh: WARNING! This deletes log files!!"
+    echo -e "\tmany_gemms.sh: If this was a mistake, do CTRL + C now!!"
+    sleep 2
+    uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
+    for ts in $(grep -oE $uniquePointRegex $ss)
+            do
+            eatNum='^([0-9])([0-9])*'
+            M=$(echo $ts | grep -oE $eatNum)
+            tail=${ts#*x}
+            N=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*x}
+            K=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*w}
+            m=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*-}
+            n=$(echo $tail | grep -oE $eatNum)
+            tail=${tail#*-}
+            k=$(echo $tail | grep -oE $eatNum)
+            buildDir="$gemmDir/"$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            logs="$buildDir/logs"
+            buildName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            exists=$(ls $logs &> /dev/null; echo $?)
+            if [[ "$exists" != "0" ]]; 
+            then
+                echo -e "\t\t$buildName logs directory does not exist. Errno $exists"
+            else
+                rm -rf $logs/*.dasm 
+                rm -rf $logs/*.txt  
+                rm -rf "$buildDir/dma_trace_00008_00000.log"
+            fi
+            done
+}
+
 main(){
     ss=$1
+    date=$(date)
     # check arguments
     exists=$(ls $ss &> /dev/null; echo $?)
     if [[ "$exists" != "0" ]]; 
@@ -138,10 +291,16 @@ main(){
         echo -e "\tmany_gemms.sh: Error: $ss csv file does not exist. Errno $exists"
         return 1
     fi
+    echo -e "\tmany_gemms.sh: $date"
 
     if [[ "$2" == "compile" ]]; 
     then
         compile $ss
+    fi
+
+    if [[ "$2" == "check" ]]; 
+    then
+        check $ss
     fi
     
     if [[ "$3" == "run" ]]; 
@@ -154,8 +313,19 @@ main(){
         onlyExtract $ss
     fi
 
+    if [[ "$5" == "clear" ]]; 
+    then
+        clear $ss
+    fi
+
+    if [[ "$5" == "clearLogs" ]]; 
+    then
+        clearLogs $ss
+    fi
+    
+
     echo -e "\tmany_gemms.sh: DONE"
     return 0
 }
 
-main $1 $2 $3 $4
+main $1 $2 $3 $4 $5 $6

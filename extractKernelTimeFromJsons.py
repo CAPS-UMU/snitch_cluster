@@ -40,8 +40,8 @@ def main():
         for c in computeCores:
             with open(c) as json_file:
                 data = json.load(json_file)
-                start=data[1]["start"]
-                end=data[regionCount-2]["end"]
+                start=data[1]["start"] # second region from beginning
+                end=data[regionCount-2]["end"] # second to last region
                 end_fpss=data[regionCount-2]["end_fpss"]
                 cycles=max(end,end_fpss) - start
                 row.append(int(cycles))
@@ -62,9 +62,11 @@ def main():
         df = pd.DataFrame(data=timeData, columns=cols)
         df['FakeNN JSON Name']=expName
         df.to_csv(f"{logs}/{expName}.csv")
+        return 0
 
 if __name__ == "__main__":
-    main()
+    if main() != 0:
+        raise Exception("")
 
     # # for each input size and tiling scheme
     # # save a json tiling scheme given m, n, k

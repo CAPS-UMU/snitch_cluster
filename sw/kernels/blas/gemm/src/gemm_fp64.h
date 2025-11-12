@@ -182,16 +182,17 @@ static inline void gemm_fp64_opt(uint32_t setup_ssr, uint32_t partition_banks,
             snrt_ssr_loop_3d(SNRT_SSR_DM2, ssr2_b[0], ssr2_b[1], ssr2_b[2],
                              ssr2_i[0], ssr2_i[1], ssr2_i[2]);
         }
-
+        // snrt_mcycle(); // to time SSR configuration
         // SSR start address need to be configured each time
         snrt_ssr_read(SNRT_SSR_DM0, SNRT_SSR_4D, A);
         snrt_ssr_read(SNRT_SSR_DM1, SNRT_SSR_4D, B);
         snrt_ssr_write(SNRT_SSR_DM2, SNRT_SSR_3D, C);
         snrt_ssr_enable();
+        // snrt_mcycle(); // to time SSR configuration
     }
 
     double c[unroll];
-    snrt_mcycle();
+    snrt_mcycle(); // uncomment when we want to time compute cores!!
 
     // If beta is not zero, we need to preload C into the accumulator,
     // and a different element of C needs to be preloaded in every (m, n)
@@ -306,7 +307,7 @@ static inline void gemm_fp64_opt(uint32_t setup_ssr, uint32_t partition_banks,
         }
     }
     snrt_fpu_fence();
-    snrt_mcycle();
+    snrt_mcycle(); // uncomment when we want to time compute cores!!!
 
     snrt_ssr_disable();
 }

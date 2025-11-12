@@ -130,6 +130,21 @@ docker run -it --entrypoint /bin/bash -v $PWD/snitch_cluster:/repo -w /repo ghcr
 
 - Now spin up docker and run `snitch_cluster.vlt sw/kernels/misc/tutorial/build/tutorial.elf`
 
+#### Estimate SSR Config time with tutorial example program
+
+``` cd sw/kernels/misc/tutorial/``` 
+
+``` snitch_cluster.vlt build/tutorial.elf```
+
+```
+bash extract_time.sh "/repo/sw/kernels/misc/tutorial/" deprecated "ssr-config-exp" "/repo/sw/kernels/misc/tutorial/logs" 1 2 3 4 5 6
+
+```
+
+
+
+
+
 ## Running gemm examples
 
 ### My Own Verilator instructions
@@ -157,7 +172,157 @@ snitch_cluster.vlt ../sw/kernels/blas/gemm/build/gemm.elf
 echo $?
 ```
 
+Pulling time from json files.
+
+```
+     print(f"USAGE: Requires two string arguments, experiment name and the full path to the experiment's logs folder, followed by M N K m n k.\nYou passed in {len(sys.argv)} args")
+   
+```
+```
+sw/kernels/blas/gemm/512x768x768w32-32-32
+sw/kernels/blas/gemm/512x768x768w32-32-32/logs
+512x768x768w32-32-32 sw/kernels/blas/gemm/512x768x768w32-32-32/logs 512 768 768 32 32 32
+```
+
 ### automating the instructions
+
+#### fixes
+
+1. stop everything and remove logs
+   ```
+   clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed.csv check no no no no
+   clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed.csv no no no clearLogs
+   
+   ```
+
+   [(0-9)*]*  20   0 .*
+
+2. create SS file without first 5 of 256x256
+   ```
+   clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed-no-top-5.csv check no no no no
+   ```
+
+   
+
+3. test out batches on this SS using sleep instead of actual call
+
+4. run those kernels!!!
+
+#### bge small 288x1024x1024
+```
+bge small 
+
+A - [1,
+    288,
+    1024
+] 
+
+B - 1024,1024
+```
+Myrtle:
+```
+python3 myrtle/myrtle.py "matmul_288x1024x1024_f64" sflt test_output.json
+288x1024x1024wm-n-k_myrtle-sflt-sorted-L1-top-15.csv
+clear;bash many_gemms.sh 288x1024x1024wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check no no no
+```
+
+```
+clear;bash many_gemms.sh 288x1024x1024wm-n-k_BGE_small-top-5.csv check no no no
+```
+
+
+
+#### phenomizer 768x384x384
+
+```
+phenomizer 
+A - 1, 768,384 
+B - 384,384
+```
+Myrtle:
+```
+python3 myrtle/myrtle.py "matmul_768x384x384_f64" sflt test_output.json
+```
+```
+
+clear;bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check no no no
+
+clear;bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv compile no no no; bash many_gemms.sh 288x1024x1024wm-n-k_myrtle-sflt-sorted-L1-top-15.csv compile no no no & bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check run no no;
+clear;sleep 4; echo "first task"; echo "second task" &; sleep 3; echo "four aalso"
+bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check no no no
+
+```
+
+```
+clear;bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check no no no
+```
+
+
+
+### roberta 768x768x768
+
+```
+clear;bash many_gemms.sh 768x768x768wm-n-k_roberta_top5.csv check no no no
+```
+
+
+
+### distillbert 512x512x512
+
+```
+clear;bash many_gemms.sh 512x512x512wm-n-k_distillbert-top-10.csv check no no no
+```
+
+
+
+#### more example runs
+
+```
+python combineKernelTimesIntoSingleCSV.py 256x256x256wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv
+```
+
+```
+clear;bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv check no no no
+```
+
+```
+clear;bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-sorted.csv check no no no
+```
+
+```
+256x256x256wm-n-k_searchSpace_c_analyzed-no-top-5-sorted
+clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed-part1.csv check no no clearLogs
+```
+
+
+
+```
+clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed.csv check no no no
+clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed.csv compile run no
+clear; nohup bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed.csv check no no &> output.txt &
+clear; nohup bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed.csv compile run no &> output.txt &
+
+```
+```
+clear;bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-topL1.csv compile run no
+clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-topL1.csv compile run no
+
+```
+```
+clear;bash many_gemms.sh 256x256x256wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv check no no
+```
+```
+clear;bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv compile no no
+```
+```
+clear;bash many_gemms.sh 56x56x56w56-28-28.csv compile run no
+```
+```
+clear;bash many_gemms.sh 56x56x56wm-n-k_searchSpace_c.csv check no no
+```
+```
+clear; many_gemms.sh 32x16x16wm-n-k_searchSpace_c.csv compile run no
+```
 
 ```
 clear;bash many_gemms.sh 56x56x56w56-28-28.csv compile run no
