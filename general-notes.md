@@ -230,7 +230,7 @@ clear;bash many_gemms.sh 288x1024x1024wm-n-k_myrtle-sflt-sorted-L1-top-15.csv ch
 clear;bash many_gemms.sh 288x1024x1024wm-n-k_BGE_small-top-5.csv check no no no
 ```
 
-
+I need to run everything.
 
 #### phenomizer 768x384x384
 
@@ -257,9 +257,9 @@ bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check no n
 clear;bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv check no no no
 ```
 
+I need to run the rest of phenomizer.
 
-
-### roberta 768x768x768
+### roberta 768x768x768 - waiting to finish
 
 ```
 clear;bash many_gemms.sh 768x768x768wm-n-k_roberta_top5.csv check no no no
@@ -267,13 +267,33 @@ clear;bash many_gemms.sh 768x768x768wm-n-k_roberta_top5.csv check no no no
 
 
 
-### distillbert 512x512x512
+### distillbert 512x512x512 - waiting to finish
 
 ```
 clear;bash many_gemms.sh 512x512x512wm-n-k_distillbert-top-10.csv check no no no
 ```
 
+### 512x768x768
 
+```
+bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv check no no
+```
+
+I have:
+
+```
+512x768x768w16-64-16... probably OK
+512x768x768w32-24-32... probably OK
+512x768x768w32-32-24... probably OK
+512x768x768w32-32-32... probably OK
+512x768x768w64-16-16... probably OK
+```
+
+```
+python combineKernelTimesIntoSingleCSV.py 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv
+```
+
+But I need everything else.
 
 #### more example runs
 
