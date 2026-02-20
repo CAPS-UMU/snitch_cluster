@@ -1,3 +1,4 @@
+#!/bin/bash
 echo -e "\tmany_gemms.sh: This script compiles, runs, and exports timing info for many gemm kernels run on the snitch cluster."
 echo -e "\tmany_gemms.sh: Always run this script from the top level directory (/repo inside the docker image)"
 echo -e "\tmany_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'"
@@ -133,7 +134,7 @@ runAndExtract(){
     ss="$1"
     echo -e "\tmany_gemms.sh: RUN + EXPORT step"
     uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
-    batchSize=5 #$(nproc)
+    batchSize=4 #5 #$(nproc)
     counter=0
     echo -e "\t\tBatch size is $batchSize"
     for ts in $(grep -oE $uniquePointRegex $ss)
@@ -197,16 +198,91 @@ onlyExtract(){
             logs="$buildDir/logs"
             cd $buildDir
             genTrace logs "trace_hart_00000"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00000.dasm"
+                rm -rf "trace_hart_00000.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00001"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00001.dasm"
+                rm -rf "trace_hart_00001.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00002"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00002.dasm"
+                rm -rf "trace_hart_00002.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00003"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00003.dasm"
+                rm -rf "trace_hart_00003.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00004"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00004.dasm"
+                rm -rf "trace_hart_00004.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00005"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00005.dasm"
+                rm -rf "trace_hart_00005.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00006"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00006.dasm"
+                rm -rf "trace_hart_00006.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00007"
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00007.dasm"
+                rm -rf "trace_hart_00007.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             genTrace logs "trace_hart_00008" dma
+            correct=$(echo $?)
+            if [[ "$correct" == "0" ]]; 
+            then
+                rm -rf "trace_hart_00008.dasm"
+                rm -rf "trace_hart_00008.txt"
+            else
+                echo -e "\tmany_gemms.sh: Error during gentrace!"
+            fi
             python $extractKernelTime $expName $logs $M $N $K $m $n $k
-            # aggregate timing info into single json
+            rm -rf $logs/*.dasm 
+            rm -rf $logs/*.txt  
+            rm -rf "$buildDir/dma_trace_00008_00000.log"
+            # TODO: aggregate timing info into single json
             cd $here            
             done
 }

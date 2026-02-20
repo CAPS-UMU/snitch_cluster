@@ -1,0 +1,116 @@
+	many_gemms.sh: This script compiles, runs, and exports timing info for many gemm kernels run on the snitch cluster.
+	many_gemms.sh: Always run this script from the top level directory (/repo inside the docker image)
+	many_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'
+	many_gemms.sh: Tue Feb  3 14:22:38 UTC 2026
+	many_gemms.sh: COMPILE step
+		192 384 384 32 32 32 with build directory /repo/sw/kernels/blas/gemm/192x384x384w32-32-32
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 6 12 12
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 8192.0 = 32.0 x 32.0 x 8
+b_size = 8192.0 = 32.0 x 32.0 x 8
+c_size = 8192.0 = 32.0 x 32.0 x 8
+Total heap space required 24.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 32 32 24 with build directory /repo/sw/kernels/blas/gemm/192x384x384w32-32-24
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 6 12 16
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 6144.0 = 32.0 x 24.0 x 8
+b_size = 6144.0 = 24.0 x 32.0 x 8
+c_size = 8192.0 = 32.0 x 32.0 x 8
+Total heap space required 20.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 24 32 32 with build directory /repo/sw/kernels/blas/gemm/192x384x384w24-32-32
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 8 12 12
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 6144.0 = 24.0 x 32.0 x 8
+b_size = 8192.0 = 32.0 x 32.0 x 8
+c_size = 6144.0 = 24.0 x 32.0 x 8
+Total heap space required 20.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 32 24 32 with build directory /repo/sw/kernels/blas/gemm/192x384x384w32-24-32
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 6 16 12
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 8192.0 = 32.0 x 32.0 x 8
+b_size = 6144.0 = 32.0 x 24.0 x 8
+c_size = 6144.0 = 32.0 x 24.0 x 8
+Total heap space required 20.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 16 64 16 with build directory /repo/sw/kernels/blas/gemm/192x384x384w16-64-16
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 12 6 24
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 2048.0 = 16.0 x 16.0 x 8
+b_size = 8192.0 = 16.0 x 64.0 x 8
+c_size = 8192.0 = 16.0 x 64.0 x 8
+Total heap space required 18.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 64 16 16 with build directory /repo/sw/kernels/blas/gemm/192x384x384w64-16-16
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 3 24 24
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 8192.0 = 64.0 x 16.0 x 8
+b_size = 2048.0 = 16.0 x 16.0 x 8
+c_size = 8192.0 = 64.0 x 16.0 x 8
+Total heap space required 18.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 16 16 64 with build directory /repo/sw/kernels/blas/gemm/192x384x384w16-16-64
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 12 24 6
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 8192.0 = 16.0 x 64.0 x 8
+b_size = 8192.0 = 64.0 x 16.0 x 8
+c_size = 2048.0 = 16.0 x 16.0 x 8
+Total heap space required 18.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 24 24 32 with build directory /repo/sw/kernels/blas/gemm/192x384x384w24-24-32
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 8 16 12
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 6144.0 = 24.0 x 32.0 x 8
+b_size = 6144.0 = 32.0 x 24.0 x 8
+c_size = 4608.0 = 24.0 x 24.0 x 8
+Total heap space required 16.5 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 8 128 8 with build directory /repo/sw/kernels/blas/gemm/192x384x384w8-128-8
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 24 3 48
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 512.0 = 8.0 x 8.0 x 8
+b_size = 8192.0 = 8.0 x 128.0 x 8
+c_size = 8192.0 = 8.0 x 128.0 x 8
+Total heap space required 16.5 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+		192 384 384 32 24 24 with build directory /repo/sw/kernels/blas/gemm/192x384x384w32-24-24
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: we are working with /repo/sw/kernels/blas/gemm/data/params.json 192x384x384 with num tiles 6 16 16
+/repo/sw/kernels/blas/gemm/scripts/datagen.py -c /repo/sw/kernels/blas/gemm/data/params.json --section="" /repo/sw/kernels/blas/gemm/build/data.h
+a_size = 6144.0 = 32.0 x 24.0 x 8
+b_size = 4608.0 = 24.0 x 24.0 x 8
+c_size = 6144.0 = 32.0 x 24.0 x 8
+Total heap space required 16.5 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/gemm/build/ -I/repo/sw/kernels/blas/gemm/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/gemm/src/main.c -o /repo/sw/kernels/blas/gemm/build/gemm.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/gemm/build/gemm.elf > /repo/sw/kernels/blas/gemm/build/gemm.dump
+	many_gemms.sh: DONE

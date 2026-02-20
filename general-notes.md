@@ -259,6 +259,64 @@ clear;bash many_gemms.sh 768x384x384wm-n-k_myrtle-sflt-sorted-L1-top-15.csv chec
 
 I need to run the rest of phenomizer.
 
+**Ran out of disk space what is the status of each run?**
+
+```
+Batch size is 3
+     About to run 768 384 384 32 16 32 with build directory /repo/sw/kernels/blas/gemm/768x384x384w32-16-32 DONE
+     About to run 768 384 384 24 24 24 with build directory /repo/sw/kernels/blas/gemm/768x384x384w24-24-24 DONE
+     About to run 768 384 384 12 64 16 with build directory /repo/sw/kernels/blas/gemm/768x384x384w12-64-16 DONE
+    starting new batch...	 
+	 About to run 768 384 384 12 16 64 with build directory /repo/sw/kernels/blas/gemm/768x384x384w12-16-64 DONE
+     About to run 768 384 384 16 64 12 with build directory /repo/sw/kernels/blas/gemm/768x384x384w16-64-12 DONE
+     About to run 768 384 384 12 32 32 with build directory /repo/sw/kernels/blas/gemm/768x384x384w12-32-32 DONE
+    starting new batch...
+    
+     About to run 768 384 384 32 32 12 with build directory /repo/sw/kernels/blas/gemm/768x384x384w32-32-12 
+     ^^ finshed running, but need to run gen_trace and extract time from all.
+     About to run 768 384 384 64 16 12 with build directory /repo/sw/kernels/blas/gemm/768x384x384w64-16-12
+     ^^ Errors and needs to be re-run
+     About to run 768 384 384 16 48 16 with build directory /repo/sw/kernels/blas/gemm/768x384x384w16-48-16
+     ^^ finished running, but need to run gen_trace on log 5 and up, then extract time from all.
+     ^^ deleted logs 0-4.
+    starting new batch...
+     About to run 768 384 384 16 16 48 with build directory /repo/sw/kernels/blas/gemm/768x384x384w16-16-48
+     ^^ ran correctly, but need to run gen_trace and then extract time for all.
+     About to run 768 384 384 48 16 16 with build directory /repo/sw/kernels/blas/gemm/768x384x384w48-16-16
+     ^^ ran correctly, but need to run gen_trace and then extract time for all.
+     About to run 768 384 384 24 32 16 with build directory /repo/sw/kernels/blas/gemm/768x384x384w24-32-16
+     ^^ Need to re-run.
+```
+
+Let's rerun the extract step for
+
+```
+768 384 384 32 32 12 DONE
+768 384 384 48 16 16 errors
+768 384 384 16 16 48 never reached
+
+```
+
+Let's rerun the extract step for (in progress)
+
+```
+768 384 384 32 32 12 DONE
+768 384 384 16 48 16
+```
+
+
+
+Rerun the rest, including (start on laptop this afternoon!)
+
+```
+768 384 384 64 16 12
+768 384 384 16 16 48
+768 384 384 48 16 16
+768 384 384 24 32 16
+```
+
+
+
 ### roberta 768x768x768 - waiting to finish
 
 ```
@@ -277,6 +335,7 @@ clear;bash many_gemms.sh 512x512x512wm-n-k_distillbert-top-10.csv check no no no
 
 ```
 bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv check no no
+bash many_gemms.sh 512x768x768wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking.csv check no no 
 ```
 
 I have:

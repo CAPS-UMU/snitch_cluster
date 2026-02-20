@@ -1,0 +1,40 @@
+	many_gemms.sh: This script compiles, runs, and exports timing info for many gemm kernels run on the snitch cluster.
+	many_gemms.sh: Always run this script from the top level directory (/repo inside the docker image)
+	many_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'
+	many_gemms.sh: Wed Feb  4 11:04:50 UTC 2026
+	many_gemms.sh: CHECK step
+		128x128x96w32-32-32... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w32-32-24... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w16-64-16... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w64-16-16... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w128-8-8... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w8-128-8... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w16-32-32... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w32-32-16... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w32-16-32... No csv with time measurements.
+		output.txt does not exist.
+		128x128x96w64-16-12... No csv with time measurements.
+		output.txt does not exist.
+	many_gemms.sh: RUN + EXPORT step
+		Batch size is 4
+		 About to run 128 128 96 32 32 32 with build directory /repo/sw/kernels/blas/gemm/128x128x96w32-32-32
+		 About to run 128 128 96 32 32 24 with build directory /repo/sw/kernels/blas/gemm/128x128x96w32-32-24
+		 About to run 128 128 96 16 64 16 with build directory /repo/sw/kernels/blas/gemm/128x128x96w16-64-16
+		 About to run 128 128 96 64 16 16 with build directory /repo/sw/kernels/blas/gemm/128x128x96w64-16-16
+		starting new batch...
+		 About to run 128 128 96 128 8 8 with build directory /repo/sw/kernels/blas/gemm/128x128x96w128-8-8
+		 About to run 128 128 96 8 128 8 with build directory /repo/sw/kernels/blas/gemm/128x128x96w8-128-8
+		 About to run 128 128 96 16 32 32 with build directory /repo/sw/kernels/blas/gemm/128x128x96w16-32-32
+		 About to run 128 128 96 32 32 16 with build directory /repo/sw/kernels/blas/gemm/128x128x96w32-32-16
+		starting new batch...
+		 About to run 128 128 96 32 16 32 with build directory /repo/sw/kernels/blas/gemm/128x128x96w32-16-32
+		 About to run 128 128 96 64 16 12 with build directory /repo/sw/kernels/blas/gemm/128x128x96w64-16-12
+	many_gemms.sh: DONE
