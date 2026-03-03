@@ -1,0 +1,1 @@
+	run_and_extract_time.sh: Arguments passed in are /repo/sw/kernels/blas/gemm-padded/24x16x24w8-8-8 /repo/extractKernelTimeFromJsons.py 24x16x24w8-8-8 /repo/sw/kernels/blas/gemm-padded/24x16x24w8-8-8/logs 24 16 24 8 8 8

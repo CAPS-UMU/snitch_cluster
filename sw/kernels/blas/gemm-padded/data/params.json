@@ -1,0 +1,1 @@
+{"setup_ssr": 1, "parallelize_m": 1, "parallelize_k": 0, "m_tiles": 3, "n_tiles": 2, "k_tiles": 3, "load_a": 1, "load_b": 1, "load_c": 1, "double_buffer": 1, "partition_banks": 0, "transa": false, "transb": false, "m": 24, "n": 16, "k": 24, "alpha": 1, "beta": 0, "gemm_fp": "gemm_fp64_opt"}
