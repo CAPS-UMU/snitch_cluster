@@ -3,7 +3,7 @@ echo -e "\tmany_gemms.sh: This script compiles, runs, and exports timing info fo
 echo -e "\tmany_gemms.sh: Always run this script from the top level directory (/repo inside the docker image)"
 echo -e "\tmany_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'"
 here="$(pwd)" # save current directory so we can return to it
-gemmDir="$here/sw/kernels/blas/gemm"
+echo "gemm dir is $gemmDir" # we require this variable to be set as an env var ahead of time.
 params="$gemmDir/data/params.json"
 extractKernelTime="$here/extractKernelTimeFromJsons.py"
 

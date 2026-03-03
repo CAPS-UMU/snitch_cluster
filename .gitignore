@@ -17,6 +17,7 @@ transcript
 .vscode/
 __pycache__
 gmon.out
+deleteLater/
 
 # Docs
 /site/
