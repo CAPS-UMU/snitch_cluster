@@ -2,15 +2,20 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
+//         Adapted gemm.h for padding.
+//
 // Author: Tim Fischer <fischeti@iis.ee.ethz.ch>
 //         Luca Bertaccini <lbertaccini@iis.ee.ethz.ch>
 //         Luca Colagrande <colluca@iis.ee.ethz.ch>
 //         Viviane Potocnik <vivianep@iis.ee.ethz.ch>
+//         Emily Sillars <emily.sillars@um.es>
 
 #include <stdalign.h>
 #include <stdint.h>
 
 #include "snrt.h"
+
+#include "gemm-padded_types.h"
 
 #pragma once
 
@@ -20,7 +25,7 @@
 /**
  * @brief Performs a General Matrix Multiplication (GEMM) operation on a
  *        Snitch-based multiple-cluster architecture with support for
- *        parallelization, tiling, and data movement optimizations.
+ *        parallelization, padded tiling, and data movement optimizations.
  *
  * @param args Pointer to a `gemm_args_t` structure containing arguments
  *             for the GEMM operation.
@@ -42,18 +47,18 @@
  * @note Current implementation assumes that `parallelize_m` and
  *       `parallelize_k` options are mutually exclusive.
  */
-static inline int gemm_padded(const gemm_args_t *args) {
+static inline int gemm_padded(const gemm_padded_args_t *args) {
 #ifndef JOB_ARGS_PRELOADED
     // Copy the arguments to local memory
-    gemm_args_t *largs = (gemm_args_t *)snrt_l1_alloc_cluster_local(
-        sizeof(gemm_args_t), alignof(gemm_args_t));
+    gemm_padded_args_t *largs = (gemm_padded_args_t *)snrt_l1_alloc_cluster_local(
+        sizeof(gemm_padded_args_t), alignof(gemm_padded_args_t));
     if (snrt_is_dm_core()) {
-        snrt_dma_start_1d((void *)largs, (void *)args, sizeof(gemm_args_t));
+        snrt_dma_start_1d((void *)largs, (void *)args, sizeof(gemm_padded_args_t));
         snrt_dma_wait_all();
     }
     snrt_cluster_hw_barrier();
 #else
-    const gemm_args_t *largs = args;
+    const gemm_padded_args_t *largs = args;
 #endif
 
     // Calculate tile sizes
@@ -68,7 +73,11 @@ static inline int gemm_padded(const gemm_args_t *args) {
     void *a0, *a1, *b0, *b1, *c0, *c1;
     void *la[2], *lb[2], *lc[2], *lcr;
     int banks_per_buffer = snrt_cluster_compute_core_num();
-    allocate_buffers(tile_a_size, tile_b_size, tile_c_size, largs,
+
+    // Ignore padding when allocating space for tiles in L1
+    // Cast from gemm_padded_args_t to gemm_args_t to ignore padding
+    gemm_args_t *largsUnpadded = (gemm_args_t*) largs;
+    allocate_buffers(tile_a_size, tile_b_size, tile_c_size, largsUnpadded,
                      banks_per_buffer, la, lb, lc, &lcr);
     if (snrt_cluster_core_idx() == 0) {
         DUMP(la[0]);

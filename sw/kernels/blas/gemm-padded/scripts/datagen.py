@@ -14,7 +14,7 @@ import sys
 
 import snitch.util.sim.data_utils as du
 
-
+import sys
 np.random.seed(42)
 
 
@@ -74,7 +74,7 @@ class GemmDataGen(du.DataGen):
         BANK_SIZE = 1 * 1024  # 2KiB
         MAX_ALLOWED_SIZE = 8 * BANK_SIZE  # Every matrix can take up maximum 8 banks
         max_size = max(a_size, b_size, c_size)
-        assert max_size <= MAX_ALLOWED_SIZE, 'one of the tiles does not fit in 8 banks'
+        assert max_size <= MAX_ALLOWED_SIZE, 'one of the tiles does not fit in 8 banks'    
 
         assert (m % m_tiles) == 0, 'm is not an integer multiple of tile size'
         assert (n % n_tiles) == 0, 'n is not an integer multiple of tile size'
@@ -124,14 +124,19 @@ class GemmDataGen(du.DataGen):
         self.validate(**kwargs)
 
         m, n, k = kwargs['m'], kwargs['n'], kwargs['k']
+        m_unpad, n_unpad, k_unpad = kwargs['m_unpadded'], kwargs['n_unpadded'], kwargs['k_unpadded']
+        kwargs.pop('m_unpadded')
+        kwargs.pop('n_unpadded')
+        kwargs.pop('k_unpadded')
 
         prec, _ = self.infer_implementation(kwargs['gemm_fp'])
 
         ctype = du.ctype_from_precision_t(prec)
 
-        a = du.generate_random_array((m, k), prec, seed=42)
-        b = du.generate_random_array((k, n), prec, seed=42)
-        c = du.generate_random_array((m, n), prec, seed=42)
+        # allocate in L3 the unpadded sizes
+        a = du.generate_random_array((m_unpad, k_unpad), prec, seed=42)
+        b = du.generate_random_array((k_unpad, n_unpad), prec, seed=42)
+        c = du.generate_random_array((m_unpad, n_unpad), prec, seed=42)
         result = self.exact_golden_model(1, a, b, kwargs['beta'], c)
 
         # Store matrices in transposed form if requested
@@ -141,9 +146,12 @@ class GemmDataGen(du.DataGen):
         a_uid = 'a'
         b_uid = 'b'
         c_uid = 'c'
-        m_uid = 'm'
-        n_uid = 'n'
-        k_uid = 'k'
+        m_uid = 'm' # "trick" gemm function into thinking the L3 matrix is padded
+        n_uid = 'n' # "trick" gemm function into thinking the L3 matrix is padded
+        k_uid = 'k' # "trick" gemm function into thinking the L3 matrix is padded
+        m_unpad_uid = 'm_unpad'
+        n_unpad_uid = 'n_unpad'
+        k_unpad_uid = 'k_unpad'
         prec_uid = 'prec'
         beta_uid = 'beta'
         transb_uid = 'transb'
@@ -157,6 +165,9 @@ class GemmDataGen(du.DataGen):
             'lda': m if kwargs['transa'] else k,
             'ldb': k if kwargs['transb'] else n,
             'ldc': n,
+            'm_unpad': m_unpad_uid,
+            'n_unpad' : n_unpad_uid,
+            'k_unpad' : k_unpad_uid
         }
         cfg['m'] = m_uid
         cfg['n'] = n_uid
@@ -177,10 +188,13 @@ class GemmDataGen(du.DataGen):
         header += [du.format_scalar_definition('extern const uint32_t', m_uid, m)]
         header += [du.format_scalar_definition('extern const uint32_t', n_uid, n)]
         header += [du.format_scalar_definition('extern const uint32_t', k_uid, k)]
+        header += [du.format_scalar_definition('extern const uint32_t', m_unpad_uid, m_unpad)]
+        header += [du.format_scalar_definition('extern const uint32_t', n_unpad_uid, n_unpad)]
+        header += [du.format_scalar_definition('extern const uint32_t', k_unpad_uid, k_unpad)]
         header += [du.format_scalar_definition('extern const uint32_t', beta_uid, kwargs['beta'])]
         header += [du.format_scalar_definition('extern const uint32_t', transb_uid,
                                                kwargs['transb'])]
-        header += [du.format_struct_definition('extern const gemm_args_t', 'args', cfg)]
+        header += [du.format_struct_definition('extern const gemm_padded_args_t', 'args', cfg)]
         header += [du.format_array_definition(ctype, a_uid, a,
                                               section=kwargs['section'])]
         header += [du.format_array_definition(ctype, b_uid, b,

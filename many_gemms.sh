@@ -44,7 +44,7 @@ compile(){
             buildDir="$gemmDir/"$M"x"$N"x"$K"w"$m"-"$n"-"$k
             echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             rm -rf $buildDir 2>/dev/null
-            python prepareParams.py $params $M $N $K $m $n $k
+            python prepareParams.py $params $M $N $K $m $n $k "$gemmDir"
             if [[ "$(echo $?)" == "0" ]]; 
                 then
                 make DEBUG=ON sw -j
