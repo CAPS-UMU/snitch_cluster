@@ -124,19 +124,23 @@ class GemmDataGen(du.DataGen):
         self.validate(**kwargs)
 
         m, n, k = kwargs['m'], kwargs['n'], kwargs['k']
-        m_unpad, n_unpad, k_unpad = kwargs['m_unpadded'], kwargs['n_unpadded'], kwargs['k_unpadded']
-        kwargs.pop('m_unpadded')
-        kwargs.pop('n_unpadded')
-        kwargs.pop('k_unpadded')
+        # m_unpad, n_unpad, k_unpad = kwargs['m_unpadded'], kwargs['n_unpadded'], kwargs['k_unpadded']
+        # kwargs.pop('m_unpadded')
+        # kwargs.pop('n_unpadded')
+        # kwargs.pop('k_unpadded')
 
         prec, _ = self.infer_implementation(kwargs['gemm_fp'])
 
         ctype = du.ctype_from_precision_t(prec)
 
+        # a = du.generate_random_array((m_unpad, k_unpad), prec, seed=42)
+        # b = du.generate_random_array((k_unpad, n_unpad), prec, seed=42)
+        # c = du.generate_random_array((m_unpad, n_unpad), prec, seed=42)
+
         # allocate in L3 the unpadded sizes
-        a = du.generate_random_array((m_unpad, k_unpad), prec, seed=42)
-        b = du.generate_random_array((k_unpad, n_unpad), prec, seed=42)
-        c = du.generate_random_array((m_unpad, n_unpad), prec, seed=42)
+        a = du.generate_random_array((m, k), prec, seed=42)
+        b = du.generate_random_array((k, n), prec, seed=42)
+        c = du.generate_random_array((m, n), prec, seed=42)
         result = self.exact_golden_model(1, a, b, kwargs['beta'], c)
 
         # Store matrices in transposed form if requested
@@ -165,9 +169,9 @@ class GemmDataGen(du.DataGen):
             'lda': m if kwargs['transa'] else k,
             'ldb': k if kwargs['transb'] else n,
             'ldc': n,
-            'm_unpad': m_unpad_uid,
-            'n_unpad' : n_unpad_uid,
-            'k_unpad' : k_unpad_uid
+            # 'm_unpad': m_unpad_uid,
+            # 'n_unpad' : n_unpad_uid,
+            # 'k_unpad' : k_unpad_uid
         }
         cfg['m'] = m_uid
         cfg['n'] = n_uid
@@ -188,13 +192,13 @@ class GemmDataGen(du.DataGen):
         header += [du.format_scalar_definition('extern const uint32_t', m_uid, m)]
         header += [du.format_scalar_definition('extern const uint32_t', n_uid, n)]
         header += [du.format_scalar_definition('extern const uint32_t', k_uid, k)]
-        header += [du.format_scalar_definition('extern const uint32_t', m_unpad_uid, m_unpad)]
-        header += [du.format_scalar_definition('extern const uint32_t', n_unpad_uid, n_unpad)]
-        header += [du.format_scalar_definition('extern const uint32_t', k_unpad_uid, k_unpad)]
+        # header += [du.format_scalar_definition('extern const uint32_t', m_unpad_uid, m_unpad)]
+        # header += [du.format_scalar_definition('extern const uint32_t', n_unpad_uid, n_unpad)]
+        # header += [du.format_scalar_definition('extern const uint32_t', k_unpad_uid, k_unpad)]
         header += [du.format_scalar_definition('extern const uint32_t', beta_uid, kwargs['beta'])]
         header += [du.format_scalar_definition('extern const uint32_t', transb_uid,
                                                kwargs['transb'])]
-        header += [du.format_struct_definition('extern const gemm_padded_args_t', 'args', cfg)]
+        header += [du.format_struct_definition('extern const gemm_args_t', 'args', cfg)]
         header += [du.format_array_definition(ctype, a_uid, a,
                                               section=kwargs['section'])]
         header += [du.format_array_definition(ctype, b_uid, b,

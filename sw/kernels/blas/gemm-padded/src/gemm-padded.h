@@ -47,18 +47,18 @@
  * @note Current implementation assumes that `parallelize_m` and
  *       `parallelize_k` options are mutually exclusive.
  */
-static inline int gemm_padded(const gemm_padded_args_t *args) {
+static inline int gemm_padded(const gemm_args_t *args) {
 #ifndef JOB_ARGS_PRELOADED
     // Copy the arguments to local memory
-    gemm_padded_args_t *largs = (gemm_padded_args_t *)snrt_l1_alloc_cluster_local(
-        sizeof(gemm_padded_args_t), alignof(gemm_padded_args_t));
+    gemm_args_t *largs = (gemm_args_t *)snrt_l1_alloc_cluster_local(
+        sizeof(gemm_args_t), alignof(gemm_args_t));
     if (snrt_is_dm_core()) {
-        snrt_dma_start_1d((void *)largs, (void *)args, sizeof(gemm_padded_args_t));
+        snrt_dma_start_1d((void *)largs, (void *)args, sizeof(gemm_args_t));
         snrt_dma_wait_all();
     }
     snrt_cluster_hw_barrier();
 #else
-    const gemm_padded_args_t *largs = args;
+    const gemm_args_t *largs = args;
 #endif
 
     // Calculate tile sizes
@@ -68,7 +68,15 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
     uint32_t tile_a_size = tile_m * tile_k * largs->prec;
     uint32_t tile_b_size = tile_k * tile_n * largs->prec;
     uint32_t tile_c_size = tile_m * tile_n * largs->prec;
-
+    // Calculate remainder tiles (the final tile in each dimension could be smaller than normal)
+    // uint32_t tile_m_rem = largs->m_unpad % tile_m != 0 ? largs->m_unpad % tile_m : tile_m;
+    // uint32_t tile_n_rem = largs->n_unpad % tile_m != 0 ? largs->n_unpad % tile_n : tile_n;
+    // uint32_t tile_k_rem = largs->k_unpad % tile_k != 0 ? largs->k_unpad % tile_k : tile_k;
+    // Calculate index when processing a remainder
+    int m_rem_idx = largs->m / tile_m -1;
+    int n_rem_idx = largs->n / tile_n -1;
+    int k_rem_idx = largs->k / tile_k -1;
+    
     // Allocate space for local tile buffers in TCDM, unless preloaded
     void *a0, *a1, *b0, *b1, *c0, *c1;
     void *la[2], *lb[2], *lc[2], *lcr;
@@ -76,8 +84,40 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
 
     // Ignore padding when allocating space for tiles in L1
     // Cast from gemm_padded_args_t to gemm_args_t to ignore padding
-    gemm_args_t *largsUnpadded = (gemm_args_t*) largs;
-    allocate_buffers(tile_a_size, tile_b_size, tile_c_size, largsUnpadded,
+    // This casting is safe because the three non-pad dimensions 
+    // are delcared as the final three members of the struct.
+   // gemm_args_t *largsUnpadded = (gemm_args_t*) largs;
+   gemm_args_t no_padding_args; //= {
+	// no_padding_args.setup_ssr = 1;
+	// no_padding_args.parallelize_m = 1;
+	// no_padding_args.parallelize_k = 0;
+	// no_padding_args.m_tiles = 1;
+	// no_padding_args.n_tiles = 1;
+	// no_padding_args.k_tiles = 2;
+	// no_padding_args.load_a = 1;
+	// no_padding_args.load_b = 1;
+	// no_padding_args.load_c = 1;
+	// no_padding_args.double_buffer = 1;
+	// no_padding_args.partition_banks = 0;
+	// no_padding_args.transa = 0;
+	// no_padding_args.transb = largs->transb;
+	// no_padding_args.m = largs->m;
+	// no_padding_args.n = largs->n;
+	// no_padding_args.k = largs->k;
+	// no_padding_args.alpha = 1;
+	// no_padding_args.beta = largs->beta;
+	// no_padding_args.gemm_fp = gemm_fp64_opt;
+	// no_padding_args.a = largs->a;
+	// no_padding_args.b = largs->b;
+	// no_padding_args.c = largs->c;
+	// no_padding_args.prec = largs->prec;
+	// no_padding_args.lda = 16;
+	// no_padding_args.ldb = 16;
+	// no_padding_args.ldc = 16;
+   // };
+
+    allocate_buffers(tile_a_size, tile_b_size, tile_c_size, largs,
+    //allocate_buffers(tile_a_size, tile_b_size, tile_c_size, &no_padding_args,
                      banks_per_buffer, la, lb, lc, &lcr);
     if (snrt_cluster_core_idx() == 0) {
         DUMP(la[0]);
@@ -114,7 +154,7 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
 
     // Iterate over all tiles
     for (uint32_t i = 0; i < num_iters; i++) {
-        // Calculate tile indices (we iterate in k->n->m order)
+        // Calculate tile indices (we iterate in m->n->k order)
         int dma_in_i = i;
         int comp_i = largs->double_buffer ? i - 1 : i;
         int dma_out_i = largs->double_buffer ? i - 2 : i - 1;
@@ -130,6 +170,27 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
         int dma_out_mn = dma_out_i / cluster_k_tiles;
         int dma_out_n = dma_out_mn % largs->n_tiles;
         int dma_out_m = dma_out_mn / largs->n_tiles;
+
+        // Calculate tile sizes for each phase: dma_in, compute, and dma_out
+        // When processing a remainder tile, the tile sizes will be smaller than usual
+        // int dma_in_tile_m = dma_in_m == m_rem_idx ? tile_m_rem : tile_m;
+        // int dma_in_tile_n = dma_in_n == n_rem_idx ? tile_n_rem : tile_n;
+        // int dma_in_tile_k = dma_in_k == k_rem_idx ? tile_k_rem : tile_k;
+        // // self.m = ts.m_rem if self.dma_in_m == ts.m_rem_idx else ts.m
+        // // self.n = ts.n_rem if self.dma_in_n == ts.n_rem_idx else ts.n
+        // // self.k = ts.k_rem if self.dma_in_k == ts.k_rem_idx else ts.k
+        // int dma_out_tile_m = dma_out_m == m_rem_idx ? tile_m_rem : tile_m;
+        // int dma_out_tile_n = dma_out_n == n_rem_idx ? tile_n_rem : tile_n;
+        // int dma_out_tile_k = dma_out_k == k_rem_idx ? tile_k_rem : tile_k;
+        // // self.m = ts.m_rem if self.dma_out_m == ts.m_rem_idx else ts.m
+        // // self.n = ts.n_rem if self.dma_out_n == ts.n_rem_idx else ts.n
+        // // self.k = ts.k_rem if self.dma_out_k == ts.k_rem_idx else ts.k
+        // int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
+        // int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
+        // int comp_tile_k = comp_k == k_rem_idx ? tile_k_rem : tile_k;
+        // self.m = ts.m_rem if self.comp_m == ts.m_rem_idx else ts.m
+        // self.n = ts.n_rem if self.comp_n == ts.n_rem_idx else ts.n
+        // self.k = ts.k_rem if self.comp_k == ts.k_rem_idx else ts.k
 
         // If m and k tiles are parallelized across clusters,
         // calculate the absolute m and k indices for each cluster
@@ -166,10 +227,11 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
                             lc[buff_idx], tile_c_size,
                             banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                             SNRT_TCDM_HYPERBANK_WIDTH);
-                    } else {
+                    } else { // only condition we modified
                         snrt_dma_store_2d_tile(largs->c, lc[buff_idx],
                                                dma_out_m_abs, dma_out_n, tile_m,
                                                tile_n, largs->ldc, largs->prec);
+
                     }
                     snrt_dma_wait_all();
                 }
@@ -196,10 +258,11 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
                             tile_a_size,
                             banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                             SNRT_TCDM_HYPERBANK_WIDTH);
-                    } else {
+                    } else { // only condition we modified
                         snrt_dma_load_2d_tile(
                             la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
                             tile_m, tile_k, largs->lda, largs->prec);
+
                     }
                 }
 
@@ -218,10 +281,11 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
                                 tile_b_size,
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
-                        } else {
+                        } else { // only condition we modified
                             snrt_dma_load_2d_tile(
                                 lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,
                                 tile_k, tile_n, largs->ldb, largs->prec);
+
                         }
                     }
                 }
@@ -240,7 +304,7 @@ static inline int gemm_padded(const gemm_padded_args_t *args) {
                                 tile_c_size,
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
-                        } else {
+                        } else { // only condition we modified
                             snrt_dma_load_2d_tile(lc[c_buff_idx], largs->c,
                                                   dma_in_m_abs, dma_in_n,
                                                   tile_m, tile_n, largs->ldc,

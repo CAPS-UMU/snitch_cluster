@@ -22,6 +22,7 @@ m=$8
 n=$9
 k=${10}
 here=${11}
+elf=$(basename $gemmDir)
 
 genTrace(){
     gen_trace="$here/util/trace/gen_trace.py"
@@ -42,13 +43,13 @@ genTrace(){
 echo -e "\trun_and_extract_time.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k"
 
 cd $buildDir
-correct=$(../scripts/verify.py snitch_cluster.vlt gemm.elf > verify-output.txt; echo $?)
+correct=$(../scripts/verify.py snitch_cluster.vlt $elf.elf > verify-output.txt; echo $?)
 if [[ "$correct" != "0" ]]; 
 then
-    echo -e "\trun_and_extract_time.sh: Error: tiled gemm did not produce expected result! Errno $correct"
+    echo -e "\trun_and_extract_time.sh: Error: tiled $elf did not produce expected result! Errno $correct"
     return 1
 else
-    echo -e "\trun_and_extract_time.sh: Ran gemm correctly."
+    echo -e "\trun_and_extract_time.sh: Ran $elf correctly."
 fi
 
 # extract timing info

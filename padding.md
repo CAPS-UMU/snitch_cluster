@@ -25,6 +25,13 @@ Compile without script:
 make DEBUG=ON sw -j
 ```
 
+Run without script:
+
+```
+cd build-directory
+../scripts/verify.py snitch_cluster.vlt gemm.elf > verify-output.txt;
+```
+
 
 
 ## gemm (unmodified)
