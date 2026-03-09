@@ -178,9 +178,17 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                             banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                             SNRT_TCDM_HYPERBANK_WIDTH);
                     } else { // modified this case
+                        // uint32_t tile_c_rem_size = dma_out_tile_m * dma_out_tile_n * largs->prec;
+                        // if(tile_c_rem_size == tile_c_size){
+
+                        //         snrt_dma_start_1d(lc[buff_idx],
+                        //                       snrt_cluster()->zeromem.mem,
+                        //                       tile_c_size);
+                        // }
+                        snrt_dma_wait_all();
                         snrt_dma_store_2d_tile(largs->c, lc[buff_idx],
-                                               dma_out_m_abs, dma_out_n, dma_in_tile_m,
-                                               dma_in_tile_n, largs->ldc, largs->prec);
+                                               dma_out_m_abs, dma_out_n, dma_out_tile_m,
+                                               dma_out_tile_n, largs->ldc, largs->prec);
                     }
                     snrt_dma_wait_all();
                 }
@@ -252,6 +260,13 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
                         } else { // this case we modified
+                            // uint32_t tile_c_rem_size = dma_in_tile_m * dma_in_tile_n * largs->prec;
+                            // if(tile_c_rem_size < tile_c_size){
+
+                            //     snrt_dma_start_1d(lc[c_buff_idx],
+                            //                   snrt_cluster()->zeromem.mem,
+                            //                   tile_c_size);
+                            // }
                             snrt_dma_load_2d_tile(lc[c_buff_idx], largs->c,
                                                   dma_in_m_abs, dma_in_n,
                                                   dma_in_tile_m, dma_in_tile_n, largs->ldc,
