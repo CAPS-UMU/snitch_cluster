@@ -1,0 +1,12 @@
+	many_gemms.sh: This script compiles, runs, and exports timing info for many gemm kernels run on the snitch cluster.
+	many_gemms.sh: Always run this script from the top level directory (/repo inside the docker image)
+	many_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'
+gemm dir is /repo/sw/kernels/blas/matmul_padded
+	many_gemms.sh: Tue Mar 10 14:56:21 UTC 2026
+	many_gemms.sh: CHECK step
+		8x16x16w8-16-16... No csv with time measurements.
+		output.txt does not exist.
+	many_gemms.sh: RUN + EXPORT step
+		Batch size is 4
+		 About to run 8 16 16 8 16 16 with build directory /repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-16
+	many_gemms.sh: DONE
