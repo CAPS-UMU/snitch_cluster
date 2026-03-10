@@ -131,23 +131,23 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
 
         // Calculate tile sizes for each phase: dma_in, compute, and dma_out
         // When processing a remainder tile, the tile sizes will be smaller than usual
-        // int dma_in_tile_m = dma_in_m == m_rem_idx ? tile_m_rem : tile_m;
-        // int dma_in_tile_n = dma_in_n == n_rem_idx ? tile_n_rem : tile_n;
-        // int dma_in_tile_k = dma_in_k == k_rem_idx ? tile_k_rem : tile_k;
-        // int dma_out_tile_m = dma_out_m == m_rem_idx ? tile_m_rem : tile_m;
-        // int dma_out_tile_n = dma_out_n == n_rem_idx ? tile_n_rem : tile_n;
+        int dma_in_tile_m = dma_in_m == m_rem_idx ? tile_m_rem : tile_m;
+        int dma_in_tile_n = dma_in_n == n_rem_idx ? tile_n_rem : tile_n;
+        int dma_in_tile_k = dma_in_k == k_rem_idx ? tile_k_rem : tile_k;
+        int dma_out_tile_m = dma_out_m == m_rem_idx ? tile_m_rem : tile_m;
+        int dma_out_tile_n = dma_out_n == n_rem_idx ? tile_n_rem : tile_n;
         int dma_out_tile_k = dma_out_k == k_rem_idx ? tile_k_rem : tile_k;
-        // int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
-        // int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
+        int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
+        int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
         int comp_tile_k = comp_k == k_rem_idx ? tile_k_rem : tile_k;
-        int dma_in_tile_m = 8;
-        int dma_in_tile_n = 8;
-        int dma_in_tile_k = 5;
-        int dma_out_tile_m = 8;
-        int dma_out_tile_n = 8;
-        //int dma_out_tile_k = 5;
-        int comp_tile_m = 8;
-        int comp_tile_n = 8;
+        // int dma_in_tile_m = 8;
+        // int dma_in_tile_n = 8;
+        // int dma_in_tile_k = 5;
+        // int dma_out_tile_m = 8;
+        // int dma_out_tile_n = 8;
+        // //int dma_out_tile_k = 5;
+        // int comp_tile_m = 8;
+        // int comp_tile_n = 8;
         //int comp_tile_k = 5;
    
         int mylda=  args->lda;
