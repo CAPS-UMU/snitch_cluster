@@ -132,6 +132,40 @@ class GemmDataGen(du.DataGen):
         a = du.generate_random_array((m, k), prec, seed=42)
         b = du.generate_random_array((k, n), prec, seed=42)
         c = du.generate_random_array((m, n), prec, seed=42)
+
+        up_K = 5
+        # m = 8
+        # n= 16
+        # k = 16
+    #     # for debugging only, we use fixed values for A, B, C
+        a_list = [x for x in range(1,m*k+1)]#[0]*(m*k)#[2]*(m*k)# [x for x in range(1,m*k+1)]#[0]*(m*k)
+        b_list = [1]*(k*n)
+        c_list = [0]*(m*n)
+        a = np.reshape(a_list, (m,k))
+        b = np.reshape(b_list, (k,n))
+        c = np.reshape(c_list, (m,n))
+        a[up_K:,:] = 13
+        b[:,up_K:] = 27
+    #     a_list = [0]*(m*k)
+    #     b_list = [0]*(k*n)
+    #     c_list = [0]*(m*n)
+    #     a = np.reshape(a_list, (m, k))
+    #     b = np.reshape(b_list, (k, n))
+    #     c = np.reshape(c_list, (m, n))
+    #     # a[5,0:5] = 9
+    #     # a[1,5] = 5
+    #     # a[3,5] = 3
+    #     # a[4,5] = 4
+    #     # a[5,5] = 9
+    #     # a[6,5] = 10
+    #     # a[6,5] = 12
+    #     # a[2,3] = 11
+    # #     a[:,up_K-4:] = 0
+    # #    # a[:,up_K:] = 0 # 0
+    #     # a[:,up_K-4:] = 13
+        #a[:,up_K:] = 1
+        #b[up_K:,] = 1
+
         result = self.exact_golden_model(1, a, b, kwargs['beta'], c)
 
         # Store matrices in transposed form if requested

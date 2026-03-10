@@ -2,7 +2,7 @@
 	many_gemms.sh: Always run this script from the top level directory (/repo inside the docker image)
 	many_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'
 gemm dir is /repo/sw/kernels/blas/matmul_padded
-	many_gemms.sh: Sun Mar  8 14:58:31 UTC 2026
+	many_gemms.sh: Tue Mar 10 14:08:24 UTC 2026
 	many_gemms.sh: CHECK step
 		8x16x16w8-16-8... No csv with time measurements.
 		output.txt does not exist.

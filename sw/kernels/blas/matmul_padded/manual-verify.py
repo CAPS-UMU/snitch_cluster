@@ -11,6 +11,117 @@ import sys
 
 # from snitch.util.sim.verif_utils import Verifier
 # from snitch.util.sim.data_utils import ctype_from_precision_t
+def printMats(M,N,K,m,n,k,up_M,up_N,up_K):
+     a_list = [x for x in range(1,m*k+1)]
+     b_list = [1]*(k*n)
+     c_list = [0]*(m*n)
+     a = np.reshape(a_list, (m,k))
+     b = np.reshape(b_list, (k,n))
+     c = np.reshape(c_list, (m,n))
+     a[up_K:,:] = 0
+     a[:,5:] = 0
+     b[:,up_K:] = 0	
+     print(f"A {a.shape} is\n {a}")
+     print(f"B {b.shape} is\n {b}")
+     print(f"C {c.shape} is\n {c}")
+     print(np.matmul(a,b))
+     print("trying something else")
+     m = 8
+     n = 8
+     k = 5
+     a_list = [x for x in range(1,m*k+1)]#[0]*(m*k)#[2]*(m*k)#[x for x in range(1,m*k+1)]#[0]*(m*k)
+     b_list = [1]*(k*n)
+     c_list = [0]*(m*n)
+     a = np.reshape(a_list, (m,k))
+     b = np.reshape(b_list, (k,n))
+     c = np.reshape(c_list, (m,n))
+   
+     print(f"A {a.shape} is\n {a}")
+     print(f"B {b.shape} is\n {b}")
+     print(f"C {c.shape} is\n {c}")
+     print(np.matmul(a,b))
+     
+
+def randomNums(M, N, K, m, n, k, up_M, up_N, up_K,a_list,b_list,c_list):
+    print("hola")
+    a = np.reshape(a_list, (M, K))
+    b = np.reshape(b_list, (K, N))
+    c = np.reshape(c_list, (M, N))
+    gemm = np.add(np.matmul(a,b),c)
+    print("No Padding, size 8x16x16:")
+    print(f"A {a.shape} is {a}")
+    print(f"B {b.shape} is {b}")
+    print(f"C {c.shape} is {c}")
+    print(f"C += A * B with shape {gemm.shape} is {gemm}")
+    print("\nSuppose we actually have 8x16x12 matrices PADDED to 8x16x16...")
+    a[:,up_K:] = 0
+    b[up_K:,] = 0
+    pad_prod = np.add(np.matmul(a,b),c)
+    print(f"A {a.shape} is {a}")
+    print(f"B {b.shape} is {b}")
+    print(f"C {c.shape} is {c}")
+    print(f"PADDED C += A * B with size {pad_prod.shape} is {pad_prod}")
+    print("\nNo padding, size 8x16x12:")
+    a_pad = np.reshape(a_list[0:up_M*up_K], (up_M,up_K)) 
+    b_pad = np.reshape(b_list[0:up_N*up_K], (up_K,up_N))
+    c_pad = np.reshape(c_list[0:up_M*up_N], (up_M,up_N))
+    prod_pad = np.add(np.matmul(a_pad,b_pad),c_pad)
+    print(f"A {a_pad.shape} is {a_pad}")
+    print(f"B {b_pad.shape} is {b_pad}")
+    print(f"C {c_pad.shape} is {c_pad}")
+    print(f"PADDED C += A * B with shape {prod_pad.shape} is {prod_pad}")
+
+def simpleNums(M, N, K, m, n, k, up_M, up_N, up_K):
+    print("hola")
+    a_list = [2]*(M*K)
+    b_list = [3]*(K*N)
+    c_list = [1]*(M*N)
+    a = np.reshape(a_list, (M, K))
+    b = np.reshape(b_list, (K, N))
+    c = np.reshape(c_list, (M, N))
+    gemm = np.add(np.matmul(a,b),c)
+    print("No Padding, size 8x16x16:")
+    print(f"A {a.shape} is {a}")
+    print(f"B {b.shape} is {b}")
+    print(f"C {c.shape} is {c}")
+    print(f"C += A * B with shape {gemm.shape} is {gemm}")
+    print("\nSuppose we actually have 8x16x12 matrices PADDED to 8x16x16...")
+    a[1,5] = 5
+    a[3,5] = 3
+    a[4,5] = 4
+    a[5,5] = 9
+    a[6,5] = 10
+    a[6,5] = 12
+    a[2,3] = 11
+    a[:,up_K-4:] = 13
+    a[:,up_K:] = 0
+    b[up_K:,] = 0
+    pad_prod = np.add(np.matmul(a,b),c)
+    print(f"A {a.shape} is {a}")
+    print(f"B {b.shape} is {b}")
+    print(f"C {c.shape} is {c}")
+    print(f"PADDED C += A * B with size {pad_prod.shape} is {pad_prod}")
+    print("\nNo padding, size 8x16x12:")
+    a_pad = np.reshape(a_list[0:up_M*up_K], (up_M,up_K)) 
+    b_pad = np.reshape(b_list[0:up_N*up_K], (up_K,up_N))
+    c_pad = np.reshape(c_list[0:up_M*up_N], (up_M,up_N))
+    prod_pad = np.add(np.matmul(a_pad,b_pad),c_pad)
+    print(f"A {a_pad.shape} is {a_pad}")
+    print(f"B {b_pad.shape} is {b_pad}")
+    print(f"C {c_pad.shape} is {c_pad}")
+    print(f"PADDED C += A * B with shape {prod_pad.shape} is {prod_pad}")
+    # print(a)
+    # print(b)
+    # print(f'a_pad is {a_list[0,up_M*up_K]} {a_list[0,up_M*up_K]}')
+    # print(f" up_M*up_K is {up_M*up_K}")
+    # print(f"up_M is {up_M}, up_N is {up_N}, up_K is {up_K}")
+    # print(f"a_list has len {len(a_list)} and vals {a_list}")
+    # a_list_zeroed = a_list
+    # a_list_zeroed[up_M*up_K:] = [0]*(len(a_list)-up_M*up_K)
+    # #l[2:] = [None]*(len(l)-2)
+    # print(f"a_list zeroed has len {len(a_list_zeroed)} and vals {a_list_zeroed}")
+    # a_pad = np.reshape(a_list_zeroed, (M, K))
+    # print(f"A {a_pad.shape} is {a_pad}")
 
 a_8x16x12 = [
 	0.5479120971119267,
@@ -1058,6 +1169,10 @@ output_8x16x12_beta_1 =[1.14369907e+00,-6.16560853e-01,1.81338970e+00,3.46655919
 
 def main():
     print("hello")
+    simpleNums(8,16,16,8,16,8,8,16,12)
+    #randomNums(8,16,16,8,16,8,8,16,12,a,b,c)
+    printMats(8,16,16,8,16,16,8,16,5)
+    return 0
     # print(c)
     # print(output)
     c_set = set(c)

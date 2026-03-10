@@ -63,9 +63,9 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
     uint32_t tile_c_size = tile_m * tile_n * largs->prec;
 
     // Calculate remainder tiles (the final tile in each dimension could be smaller than normal)
-    uint32_t tile_m_rem = m_unpad % tile_m != 0 ? m_unpad % tile_m : tile_m;
-    uint32_t tile_n_rem = n_unpad % tile_m != 0 ? n_unpad % tile_n : tile_n;
-    uint32_t tile_k_rem = k_unpad % tile_k != 0 ? k_unpad % tile_k : tile_k;
+    uint32_t tile_m_rem = (m_unpad % tile_m) != 0 ? (m_unpad % tile_m) : tile_m;
+    uint32_t tile_n_rem = (n_unpad % tile_m) != 0 ? (n_unpad % tile_n) : tile_n;
+    uint32_t tile_k_rem = (k_unpad % tile_k) != 0 ? (k_unpad % tile_k) : tile_k;
     // Calculate index when processing a remainder
     int m_rem_idx = largs->m / tile_m -1;
     int n_rem_idx = largs->n / tile_n -1;
@@ -131,15 +131,30 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
 
         // Calculate tile sizes for each phase: dma_in, compute, and dma_out
         // When processing a remainder tile, the tile sizes will be smaller than usual
-        int dma_in_tile_m = dma_in_m == m_rem_idx ? tile_m_rem : tile_m;
-        int dma_in_tile_n = dma_in_n == n_rem_idx ? tile_n_rem : tile_n;
-        int dma_in_tile_k = dma_in_k == k_rem_idx ? tile_k_rem : tile_k;
-        int dma_out_tile_m = dma_out_m == m_rem_idx ? tile_m_rem : tile_m;
-        int dma_out_tile_n = dma_out_n == n_rem_idx ? tile_n_rem : tile_n;
+        // int dma_in_tile_m = dma_in_m == m_rem_idx ? tile_m_rem : tile_m;
+        // int dma_in_tile_n = dma_in_n == n_rem_idx ? tile_n_rem : tile_n;
+        // int dma_in_tile_k = dma_in_k == k_rem_idx ? tile_k_rem : tile_k;
+        // int dma_out_tile_m = dma_out_m == m_rem_idx ? tile_m_rem : tile_m;
+        // int dma_out_tile_n = dma_out_n == n_rem_idx ? tile_n_rem : tile_n;
         int dma_out_tile_k = dma_out_k == k_rem_idx ? tile_k_rem : tile_k;
-        int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
-        int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
+        // int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
+        // int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
         int comp_tile_k = comp_k == k_rem_idx ? tile_k_rem : tile_k;
+        int dma_in_tile_m = 8;
+        int dma_in_tile_n = 8;
+        int dma_in_tile_k = 5;
+        int dma_out_tile_m = 8;
+        int dma_out_tile_n = 8;
+        //int dma_out_tile_k = 5;
+        int comp_tile_m = 8;
+        int comp_tile_n = 8;
+        //int comp_tile_k = 5;
+   
+        int mylda=  args->lda;
+        int myldb = args->ldb;
+        int myldc = args->ldc;
+        
+        
 
         //dma_in_tile_n = 8;
         // If m and k tiles are parallelized across clusters,
@@ -185,10 +200,10 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                         //                       snrt_cluster()->zeromem.mem,
                         //                       tile_c_size);
                         // }
-                        snrt_dma_wait_all();
+                        // snrt_dma_wait_all();
                         snrt_dma_store_2d_tile(largs->c, lc[buff_idx],
                                                dma_out_m_abs, dma_out_n, dma_out_tile_m,
-                                               dma_out_tile_n, largs->ldc, largs->prec);
+                                               dma_out_tile_n, args->ldc, largs->prec);
                     }
                     snrt_dma_wait_all();
                 }
@@ -218,7 +233,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                     } else { // this case we modified
                         snrt_dma_load_2d_tile(
                             la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
-                            dma_in_tile_m, dma_in_tile_k, largs->lda, largs->prec);
+                            dma_in_tile_m, dma_in_tile_k, mylda, largs->prec);
                     }
                 }
 
@@ -240,7 +255,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                         } else { // this case we modified
                             snrt_dma_load_2d_tile(
                                 lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,
-                                dma_in_tile_k, dma_in_tile_n, largs->ldb, largs->prec);
+                                dma_in_tile_k, dma_in_tile_n, myldb, largs->prec);
                         }
                     }
                 }
@@ -269,7 +284,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                             // }
                             snrt_dma_load_2d_tile(lc[c_buff_idx], largs->c,
                                                   dma_in_m_abs, dma_in_n,
-                                                  dma_in_tile_m, dma_in_tile_n, largs->ldc,
+                                                  dma_in_tile_m, dma_in_tile_n, args->ldc,
                                                   largs->prec);
                         }
                     } else if (dma_in_k == 0) {

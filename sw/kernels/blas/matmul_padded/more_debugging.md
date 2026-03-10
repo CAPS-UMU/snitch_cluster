@@ -150,7 +150,7 @@
 
    It looks identical. I guess this makes sense because in all cases, dma_out_n is 16 (not tiled in n dimension).
 
-5. We try chaning `largs->lda` in load 2D tile to `dma_in_tile_k`. How does the output change?
+5. We try changing `largs->lda` in load 2D tile to `dma_in_tile_k`. How does the output change?
    output:
 
    ```
@@ -181,7 +181,7 @@
 
    The first 16 elements are the same as the previous. The others differ.
 
-6. hoodle
+6. Tried zeroing out the C scratchpad tile before reading in the remainder tile from L3
    ```
    uint32_t tile_c_rem_size = dma_in_tile_m * dma_in_tile_n * largs->prec;
                                if(tile_c_rem_size < tile_c_size){
