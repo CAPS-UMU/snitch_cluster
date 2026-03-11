@@ -2,13 +2,6 @@
 	run_and_extract_time.sh: Error: tiled matmul_padded did not produce expected result! Errno 1
 run_and_extract_time.sh: line 50: return: can only `return' from a function or sourced script
 logsDir is logs and log file is trace_hart_00000 and dma is 
-Traceback (most recent call last):
-  File "/repo/util/trace/gen_trace.py", line 1200, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/repo/util/trace/gen_trace.py", line 1185, in main
-    warnings.warn(wb_msg(REG_ABI_NAMES_I[gpr], que))
-UserWarning: Missing 1 writebacks to register s0 from transactions initiated at cycles: 2988.
 logsDir is logs and log file is trace_hart_00001 and dma is 
 logsDir is logs and log file is trace_hart_00002 and dma is 
 logsDir is logs and log file is trace_hart_00003 and dma is 

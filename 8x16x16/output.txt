@@ -2,13 +2,6 @@
 	run_and_extract_time.sh: Error: tiled matmul_padded did not produce expected result! Errno 1
 run_and_extract_time.sh: line 50: return: can only `return' from a function or sourced script
 logsDir is logs and log file is trace_hart_00000 and dma is 
-Traceback (most recent call last):
-  File "/repo/util/trace/gen_trace.py", line 1200, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "/repo/util/trace/gen_trace.py", line 1185, in main
-    warnings.warn(wb_msg(REG_ABI_NAMES_I[gpr], que))
-UserWarning: Missing 1 writebacks to register s0 from transactions initiated at cycles: 2988.
 logsDir is logs and log file is trace_hart_00001 and dma is 
 logsDir is logs and log file is trace_hart_00002 and dma is 
 logsDir is logs and log file is trace_hart_00003 and dma is 
@@ -19,12 +12,12 @@ logsDir is logs and log file is trace_hart_00007 and dma is
 logsDir is logs and log file is trace_hart_00008 and dma is dma
 
 		extractKernelTimeFromJsons.py: ATTN: only many_gemms.sh should call this script.
-Traceback (most recent call last):
-  File "/repo/extractKernelTimeFromJsons.py", line 68, in <module>
-    if main() != 0:
-       ^^^^^^
-  File "/repo/extractKernelTimeFromJsons.py", line 44, in main
-    end=data[regionCount-2]["end"] # second to last region
-        ~~~~^^^^^^^^^^^^^^^
-IndexError: list index out of range
-	run_and_extract_time.sh: Error exporting timing info!
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00000-perf.json: start: 2834 end:3301 end_fpss:3297
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00001-perf.json: start: 2835 end:3307 end_fpss:3304
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00002-perf.json: start: 2836 end:3313 end_fpss:3309
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00003-perf.json: start: 2837 end:3310 end_fpss:3306
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00004-perf.json: start: 2838 end:3319 end_fpss:3315
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00005-perf.json: start: 2839 end:3304 end_fpss:3300
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00006-perf.json: start: 2832 end:3299 end_fpss:3295
+/repo/sw/kernels/blas/matmul_padded/8x16x16w8-16-8/logs/hart-trace_hart_00007-perf.json: start: 2833 end:3300 end_fpss:3296
+	run_and_extract_time.sh: Successfully exported timing information. Deleting logs...

@@ -133,19 +133,32 @@ class GemmDataGen(du.DataGen):
         b = du.generate_random_array((k, n), prec, seed=42)
         c = du.generate_random_array((m, n), prec, seed=42)
 
-        up_K = 5
+        up_K = 12
         # m = 8
         # n= 16
         # k = 16
+        M = m
+        N = n
+        K = k
+        a_list = [2]*(M*K)
+        b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
+        c_list = [0]*(M*N)
+        a = np.reshape(a_list, (M,K))
+        b = np.reshape(b_list, (K,N))
+        c = np.reshape(c_list, (M,N))
+        # print(f"")
+        a[:,up_K:] = 95	# for all cols after up_K, set to 0
+        b[up_K:,:] = -2 # for all rows after up_K, set to 0
+
     #     # for debugging only, we use fixed values for A, B, C
-        a_list = [x for x in range(1,m*k+1)]#[0]*(m*k)#[2]*(m*k)# [x for x in range(1,m*k+1)]#[0]*(m*k)
-        b_list = [1]*(k*n)
-        c_list = [0]*(m*n)
-        a = np.reshape(a_list, (m,k))
-        b = np.reshape(b_list, (k,n))
-        c = np.reshape(c_list, (m,n))
-        a[up_K:,:] = 13
-        b[:,up_K:] = 27
+        # a_list = [x for x in range(1,m*k+1)]#[0]*(m*k)#[2]*(m*k)# [x for x in range(1,m*k+1)]#[0]*(m*k)
+        # b_list = [1]*(k*n)
+        # c_list = [0]*(m*n)
+        # a = np.reshape(a_list, (m,k))
+        # b = np.reshape(b_list, (k,n))
+        # c = np.reshape(c_list, (m,n))
+        # a[:,up_K:] = 75	# for all cols after up_K, set to 0
+
     #     a_list = [0]*(m*k)
     #     b_list = [0]*(k*n)
     #     c_list = [0]*(m*n)

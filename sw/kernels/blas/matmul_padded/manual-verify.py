@@ -8,6 +8,115 @@
 import numpy as np
 import sys
 # from datagen import GemmDataGen
+off_by_16 = [ 62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.
+,62.,62.,62.,62.,254.,254.,254.,254.,254.,254.,254.,254.
+,254.,254.,254.,254.,254.,254.,254.,254.,446.,446.,446.,446.
+,446.,446.,446.,446.,446.,446.,446.,446.,446.,446.,446.,446.
+,638.,638.,638.,638.,638.,638.,638.,638.,638.,638.,638.,638.
+,638.,638.,638.,638.,830.,830.,830.,830.,830.,830.,830.,830.
+,830.,830.,830.,830.,830.,830.,830.,830.,1022.,1022.,1022.,1022.
+,1022.,1022.,1022.,1022.,1022.,1022.,1022.,1022.,1022.,1022.,1022.,1022.
+,1214.,1214.,1214.,1214.,1214.,1214.,1214.,1214.,1214.,1214.,1214.,1214.
+,1214.,1214.,1214.,1214.,1406.,1406.,1406.,1406.,1406.,1406.,1406.,1406.
+,1406.,1406.,1406.,1406.,1406.,1406.,1406.,1406.]
+#8x16x16w8-16-8up8x16x5
+
+def printAnswerFocusOnB(M,N,K,m,n,k,up_M,up_N,up_K):
+     a_list = [2]*(M*K)
+     b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
+     c_list = [0]*(M*N)
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+     a[:,up_K:] = 95	# for all cols after up_K, set to 0
+     b[up_K:,:] = -2 # for all rows after up_K, set to 0
+     print(f"A {a.shape} is\n {a}")
+     print(f"B {b.shape} is\n {b}")
+     print(f"C {c.shape} is\n {c}")
+     print("C = A x B (no padding)")
+     print(np.matmul(a,b))
+     print(f"C = A x B (assuming padding around original size {up_M} {up_N} {up_K})")
+    #  print(list(range(up_K,a.shape[0])))
+     a = np.delete(a,list(range(up_K,a.shape[1])),1) # delete rows in index range
+     b = np.delete(b,list(range(up_K,b.shape[0])),0) # delete cols in index range
+     print(a)
+     print(b)
+     print(np.matmul(a,b))
+     print("what about just the first tile?")
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+     b[8:,:] = 0 # for all rows after up_K, set to 0
+     a[:,8:] = 0	# for all cols after up_K, set to 0
+     tile1=np.matmul(a,b)
+     print(tile1)
+     print("what about just the second tile?")
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+     b[0:8,:] = 0 # for all rows after up_K, set to 0
+     a[:,0:8] = 0	# for all cols after up_K, set to 0
+     b[up_K:,:] = 0 # for all rows after up_K, set to 0
+     a[:,up_K:] = 0	# for all cols after up_K, set to 0
+     tile2 = np.matmul(a,b)
+     print(tile2)
+     print("The two tile added together?")
+     print(np.add(tile1,tile2))
+     
+def printAnswer(M,N,K,m,n,k,up_M,up_N,up_K):
+     a_list = [x for x in range(1,M*K+1)]
+     b_list = [1]*(K*N)#[x+2 for x in range(1,K*N+1)]#[1]*(K*N)
+     c_list = [0]*(M*N)
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+    # print(f"")
+     b[up_K:,:] = 0 # for all rows after up_K, set to 0
+     a[:,up_K:] = 0	# for all cols after up_K, set to 0
+     print(f"A {a.shape} is\n {a}")
+     print(f"B {b.shape} is\n {b}")
+     print(f"C {c.shape} is\n {c}")
+     print("C = A x B (no padding)")
+     print(np.matmul(a,b))
+     print(f"C = A x B (assuming padding around original size {up_M} {up_N} {up_K})")
+    #  print(list(range(up_K,a.shape[0])))
+     a = np.delete(a,list(range(up_K,a.shape[1])),1) # delete rows in index range
+     b = np.delete(b,list(range(up_K,b.shape[0])),0) # delete cols in index range
+     print(a)
+     print(b)
+     print(np.matmul(a,b))
+     print("what about just the first tile?")
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+     b[8:,:] = 0 # for all rows after up_K, set to 0
+     a[:,8:] = 0	# for all cols after up_K, set to 0
+     tile1=np.matmul(a,b)
+     print(tile1)
+     print("what about just the second tile?")
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+     b[0:8,:] = 0 # for all rows after up_K, set to 0
+     a[:,0:8] = 0	# for all cols after up_K, set to 0
+     b[up_K:,:] = 0 # for all rows after up_K, set to 0
+     a[:,up_K:] = 0	# for all cols after up_K, set to 0
+     tile2 = np.matmul(a,b)
+     print(tile2)
+     print("The two tile added together?")
+     print(np.add(tile1,tile2))
+    #  print("Off by 16 result - first tile")
+    #  off = np.reshape(off_by_16,(M,N))
+    #  print(np.subtract(off,tile1))
+     #print(off)
+     # Source - https://stackoverflow.com/a/64180842
+# Posted by Sujil Maharjan, modified by community. See post 'Timeline' for change history
+# Retrieved 2026-03-11, License - CC BY-SA 4.0
+
+# arr = np.delete(arr, index, 0) # deletes the desired row 
+# arr = np.delete(arr, index, 1) # deletes the desired column at index
+
+     print("aloha")
 
 # from snitch.util.sim.verif_utils import Verifier
 # from snitch.util.sim.data_utils import ctype_from_precision_t
@@ -1169,9 +1278,11 @@ output_8x16x12_beta_1 =[1.14369907e+00,-6.16560853e-01,1.81338970e+00,3.46655919
 
 def main():
     print("hello")
-    simpleNums(8,16,16,8,16,8,8,16,12)
+    #simpleNums(8,16,16,8,16,8,8,16,12)
     #randomNums(8,16,16,8,16,8,8,16,12,a,b,c)
-    printMats(8,16,16,8,16,16,8,16,5)
+    #printMats(8,16,16,8,16,16,8,16,5)
+    # printAnswer(8,16,16,8,16,16,8,16,12)
+    printAnswerFocusOnB(8,16,16,8,16,8,8,16,12)
     return 0
     # print(c)
     # print(output)
