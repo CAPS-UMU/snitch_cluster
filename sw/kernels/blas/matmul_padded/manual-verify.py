@@ -21,50 +21,97 @@ off_by_16 = [ 62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.
 ,1406.,1406.,1406.,1406.,1406.,1406.,1406.,1406.]
 #8x16x16w8-16-8up8x16x5
 
-def padN(M,N,K,m,n,k,up_M,up_N,up_K):
-     a_list = [2]*(M*K)
+def padN(M,N,K,m,n,k,up_M,up_N,up_K,beta):
+     # a_list =[2]*(M*K) # [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
+     # b_list =[3]*(K*N) # [x+2 for x in range(1,K*N+1)]
+     a_list = [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
      b_list = [x+2 for x in range(1,K*N+1)]
      c_list = [1]*(M*N)
      a = np.reshape(a_list, (M,K))
      b = np.reshape(b_list, (K,N))
      c = np.reshape(c_list, (M,N))
-     b[:,up_N:] = -2 
-     c[:,up_N:] = 1
+     b[:,up_N:] = 95 # set cols after up_N to 95
+     c[:,up_N:] = -2
      print(f"A {a.shape} is\n {a}")
      print(f"B {b.shape} is\n {b}")
      print(f"C {c.shape} is\n {c}")
      print("C = A x B (no padding)")
-     print(np.matmul(a,b))
+     if beta==1:
+          no_padding_result = np.add(np.matmul(a,b),c)
+     else:
+          no_padding_result = np.matmul(a,b)
+     print(no_padding_result)
      print(f"C = A x B (assuming padding around original size {up_M} {up_N} {up_K})")
-     c = np.delete(c,list(range(up_N,c.shape[1])),1) 
      b = np.delete(b,list(range(up_N,b.shape[1])),1) 
+     c = np.delete(c,list(range(up_N,c.shape[1])),1) 
      print(a)
      print(b)
      print(c)
-     print(np.matmul(a,b))
+     if beta==1:
+          padding_result = np.add(np.matmul(a,b),c)
+     else:
+          padding_result = np.matmul(a,b)
+     # first tile only
+     if(int(N / n) == 1 and up_N != N):
+          n_rem_tile = up_N % n
+          print(f'int(N / n) is { int(N / n)}')
+          print(f'is n_rem_tile = {up_N} % {n} = { n_rem_tile}')
+          # n_unpad % tile_n
+          # n_rem_tile = up_N %
+          b[:,n_rem_tile:] = 0#95 # set cols after up_N to 95
+     else:
+          print(f'int(N / n) is { int(N / n)}')
+          b[:,n:] = 0#95 # set cols after up_N to 95
+    # c[:,n:] = 0#-2
+     if beta==1:
+          print(f"C is {c}")
+          print("A*B = {np.matmul(a,b)}")
+          first_tile = np.add(np.matmul(a,b),c)
+     else:
+          first_tile = np.matmul(a,b)
+     print(padding_result)
+     print("first tile:")
+     print(first_tile)
+     print("********************************************************")
+     print(padding_result,end="\n\n")
+     print(no_padding_result)
 
 
-def printAnswerFocusOnB(M,N,K,m,n,k,up_M,up_N,up_K):
-     a_list = [x+2 for x in range(5,M*K+5)]
+def printAnswerFocusOnB(M,N,K,m,n,k,up_M,up_N,up_K,beta):
+     #a_list = [x+2 for x in range(5,M*K+5)]
+     a_list = [2]*(M*K)
      b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
-     c_list = [0]*(M*N)
+     #b_list = [1]*(K*N)
+     c_list = [1]*(M*N) #[0]*(M*N)
      a = np.reshape(a_list, (M,K))
      b = np.reshape(b_list, (K,N))
      c = np.reshape(c_list, (M,N))
-     a[:,up_K:] = 95	# for all cols after up_K, set to 0
+     a[:,up_K:] = 95 # for all cols after up_K, set to 0
      b[up_K:,:] = -2 # for all rows after up_K, set to 0
      print(f"A {a.shape} is\n {a}")
      print(f"B {b.shape} is\n {b}")
      print(f"C {c.shape} is\n {c}")
+     print("")
      print("C = A x B (no padding)")
-     print(np.matmul(a,b))
-     print(f"C = A x B (assuming padding around original size {up_M} {up_N} {up_K})")
+     if beta==1:
+          no_padding_result = np.add(np.matmul(a,b),c)
+     else:
+          no_padding_result = np.matmul(a,b)
+     print(no_padding_result)
+     print("")
     #  print(list(range(up_K,a.shape[0])))
-     a = np.delete(a,list(range(up_K,a.shape[1])),1) # delete rows in index range
-     b = np.delete(b,list(range(up_K,b.shape[0])),0) # delete cols in index range
+     print("A initial values")
+     a = np.delete(a,list(range(up_K,a.shape[1])),1) # delete cols in index range
+     b = np.delete(b,list(range(up_K,b.shape[0])),0) # delete rows in index range
      print(a)
+     print("B initial values")
      print(b)
-     print(np.matmul(a,b))
+     print(f"C = A x B (assuming padding around original size {up_M} {up_N} {up_K})")
+     if beta==1:
+          padding_result = np.add(np.matmul(a,b),c)
+     else:
+          padding_result = np.matmul(a,b)
+     print(padding_result)
      print("what about just the first tile?")
      a = np.reshape(a_list, (M,K))
      b = np.reshape(b_list, (K,N))
@@ -85,6 +132,10 @@ def printAnswerFocusOnB(M,N,K,m,n,k,up_M,up_N,up_K):
      print(tile2)
      print("The two tile added together?")
      print(np.add(tile1,tile2))
+     print("********************************************************")
+     print(padding_result,end="\n\n")
+     print(no_padding_result)
+     
      
 def printAnswer(M,N,K,m,n,k,up_M,up_N,up_K):
      a_list = [x for x in range(1,M*K+1)]
@@ -1305,8 +1356,10 @@ def main():
     #randomNums(8,16,16,8,16,8,8,16,12,a,b,c)
     #printMats(8,16,16,8,16,16,8,16,5)
     # printAnswer(8,16,16,8,16,16,8,16,12)
-    printAnswerFocusOnB(8,16,16,8,16,8,8,16,12)
-    padN(8,16,16,8,8,16,8,12,16)
+    #printAnswerFocusOnB(8,16,16,8,16,8,8,16,12,beta=1)
+#     padN(8,16,16,8,8,16,8,12,16,beta=1)
+#     padN(8,16,16,8,16,16,8,12,16,beta=1)
+    padN(8,48,8,8,24,8,8,32,8,beta=1)
     return 0
     # print(c)
     # print(output)

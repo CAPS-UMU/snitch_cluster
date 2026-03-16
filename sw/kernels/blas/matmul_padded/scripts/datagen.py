@@ -134,18 +134,20 @@ class GemmDataGen(du.DataGen):
         c = du.generate_random_array((m, n), prec, seed=42)
 
         # for pad N function
-        up_N = 12
+        up_N = 32
         M = m
         N = n
         K = k
-        a_list = [2]*(M*K)
+        a_list = [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
         b_list = [x+2 for x in range(1,K*N+1)]
+        # a_list = [2]*(M*K)#[x+2 for x in range(5,M*K+5)]#[2]*(M*K)
+        # b_list = [3]*(K*N)#[x+2 for x in range(1,K*N+1)]
         c_list = [1]*(M*N)
         a = np.reshape(a_list, (M,K))
         b = np.reshape(b_list, (K,N))
         c = np.reshape(c_list, (M,N))
-        b[:,up_N:] = -2 
-        c[:,up_N:] = 1
+        b[:,up_N:] = 95 
+        c[:,up_N:] = -2
 
         # for manual-verify.py's 
         # printAnswerFocusOnB function
@@ -153,9 +155,12 @@ class GemmDataGen(du.DataGen):
         # M = m
         # N = n
         # K = k
-        # a_list = [x+2 for x in range(5,M*K+5)]
-        # b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
-        # c_list = [0]*(M*N)
+        # #a_list = [x+2 for x in range(5,M*K+5)]
+        # a_list = [2]*(M*K)
+        # #b_list = [1]*(K*N)
+        # b_list = [3]*(K*N)#[x+2 for x in range(1,K*N+1)]#[1]*(K*N)
+        # #c_list = [0]*(M*N)
+        # c_list = [1]*(M*N) #[0]*(M*N)
         # a = np.reshape(a_list, (M,K))
         # b = np.reshape(b_list, (K,N))
         # c = np.reshape(c_list, (M,N))
