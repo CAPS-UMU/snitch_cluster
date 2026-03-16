@@ -16,7 +16,7 @@ export gemmDir="/repo/sw/kernels/blas/gemm"
 For padding:
 
 ```
-export gemmDir="/repo/sw/kernels/blas/gemm-padded"
+export gemmDir="/repo/sw/kernels/blas/matmul-padded"
 ```
 
 Compile without script:

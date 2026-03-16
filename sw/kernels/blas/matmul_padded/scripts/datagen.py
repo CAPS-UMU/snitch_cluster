@@ -133,22 +133,34 @@ class GemmDataGen(du.DataGen):
         b = du.generate_random_array((k, n), prec, seed=42)
         c = du.generate_random_array((m, n), prec, seed=42)
 
-        up_K = 12
-        # m = 8
-        # n= 16
-        # k = 16
+        # for pad N function
+        up_N = 12
         M = m
         N = n
         K = k
         a_list = [2]*(M*K)
-        b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
-        c_list = [0]*(M*N)
+        b_list = [x+2 for x in range(1,K*N+1)]
+        c_list = [1]*(M*N)
         a = np.reshape(a_list, (M,K))
         b = np.reshape(b_list, (K,N))
         c = np.reshape(c_list, (M,N))
-        # print(f"")
-        a[:,up_K:] = 95	# for all cols after up_K, set to 0
-        b[up_K:,:] = -2 # for all rows after up_K, set to 0
+        b[:,up_N:] = -2 
+        c[:,up_N:] = 1
+
+        # for manual-verify.py's 
+        # printAnswerFocusOnB function
+        # up_K = 12
+        # M = m
+        # N = n
+        # K = k
+        # a_list = [x+2 for x in range(5,M*K+5)]
+        # b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
+        # c_list = [0]*(M*N)
+        # a = np.reshape(a_list, (M,K))
+        # b = np.reshape(b_list, (K,N))
+        # c = np.reshape(c_list, (M,N))
+        # a[:,up_K:] = 95	# for all cols after up_K, set to 0
+        # b[up_K:,:] = -2 # for all rows after up_K, set to 0
 
     #     # for debugging only, we use fixed values for A, B, C
         # a_list = [x for x in range(1,m*k+1)]#[0]*(m*k)#[2]*(m*k)# [x for x in range(1,m*k+1)]#[0]*(m*k)

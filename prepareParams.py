@@ -23,7 +23,7 @@ defaultSettings={
     "n": 16,
     "k": 16,
     "alpha": 1,
-    "beta": 1,#0,
+    "beta": 1,
     "gemm_fp": "gemm_fp64_opt"
 }
 

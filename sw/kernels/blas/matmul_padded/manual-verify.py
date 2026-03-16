@@ -21,8 +21,31 @@ off_by_16 = [ 62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.
 ,1406.,1406.,1406.,1406.,1406.,1406.,1406.,1406.]
 #8x16x16w8-16-8up8x16x5
 
-def printAnswerFocusOnB(M,N,K,m,n,k,up_M,up_N,up_K):
+def padN(M,N,K,m,n,k,up_M,up_N,up_K):
      a_list = [2]*(M*K)
+     b_list = [x+2 for x in range(1,K*N+1)]
+     c_list = [1]*(M*N)
+     a = np.reshape(a_list, (M,K))
+     b = np.reshape(b_list, (K,N))
+     c = np.reshape(c_list, (M,N))
+     b[:,up_N:] = -2 
+     c[:,up_N:] = 1
+     print(f"A {a.shape} is\n {a}")
+     print(f"B {b.shape} is\n {b}")
+     print(f"C {c.shape} is\n {c}")
+     print("C = A x B (no padding)")
+     print(np.matmul(a,b))
+     print(f"C = A x B (assuming padding around original size {up_M} {up_N} {up_K})")
+     c = np.delete(c,list(range(up_N,c.shape[1])),1) 
+     b = np.delete(b,list(range(up_N,b.shape[1])),1) 
+     print(a)
+     print(b)
+     print(c)
+     print(np.matmul(a,b))
+
+
+def printAnswerFocusOnB(M,N,K,m,n,k,up_M,up_N,up_K):
+     a_list = [x+2 for x in range(5,M*K+5)]
      b_list = [x+2 for x in range(1,K*N+1)]#[1]*(K*N)
      c_list = [0]*(M*N)
      a = np.reshape(a_list, (M,K))
@@ -1283,6 +1306,7 @@ def main():
     #printMats(8,16,16,8,16,16,8,16,5)
     # printAnswer(8,16,16,8,16,16,8,16,12)
     printAnswerFocusOnB(8,16,16,8,16,8,8,16,12)
+    padN(8,16,16,8,8,16,8,12,16)
     return 0
     # print(c)
     # print(output)

@@ -614,6 +614,46 @@ inline snrt_dma_txid_t snrt_dma_store_2d_tile(
 }
 
 /**
+ * @brief Store a 2D tile to a 2D array, accounting for remainder tiles.
+ * @details TODO
+ */
+inline snrt_dma_txid_t snrt_dma_store_2d_remainder_tile(
+    void *dst, void *src, size_t tile_x1_idx, size_t tile_x0_idx,
+    size_t tile_x1_prev_size, size_t tile_x0_prev_size,
+    size_t tile_x1_size, size_t tile_x0_size, size_t full_x0_size,
+    uint32_t prec, size_t tile_ld) {
+    size_t dst_offset = 0;
+    // Advance dst array in x0 and x1 dimensions, and convert to byte offset
+    dst_offset += tile_x0_idx * tile_x0_prev_size;
+    dst_offset += tile_x1_idx * tile_x1_prev_size * full_x0_size;
+    dst_offset *= prec;
+    // Initiate transfer
+    return snrt_dma_start_2d((uint64_t)dst + dst_offset,  // dst
+                             (uint64_t)src,               // src
+                             tile_x0_size * prec,         // size
+                             full_x0_size * prec,         // dst_stride
+                             tile_ld,                     // src_stride
+                             tile_x1_size                 // repeat
+    );
+}
+
+/**
+ * @brief Store a 2D tile of a 2D array, accounting for remainder tiles.
+ *
+ * @details TODO
+ */
+inline snrt_dma_txid_t snrt_dma_store_2d_remainder_tile(
+    void *dst, void *src, size_t tile_x1_idx, size_t tile_x0_idx,
+    size_t tile_x1_prev_size, size_t tile_x0_prev_size,
+    size_t tile_x1_size, size_t tile_x0_size, size_t full_x0_size,
+    uint32_t prec) {
+    return snrt_dma_store_2d_remainder_tile(dst, src, tile_x1_idx, tile_x0_idx,
+                                  tile_x1_prev_size, tile_x0_prev_size,
+                                  tile_x1_size, tile_x0_size, full_x0_size,
+                                  prec, tile_x0_size * prec);
+}
+
+/**
  * @brief Store a 2D tile of a 2D array from a 1D layout occupying a subset of
  *        TCDM banks.
  * @param dst Pointer to the destination array.

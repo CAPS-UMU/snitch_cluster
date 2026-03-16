@@ -159,20 +159,20 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
         // int comp_tile_k = 8;
         //                 // i = 0, only load in size 8
         // if(i == 0){
-        //     dma_in_tile_k = 8;
+        //     dma_in_tile_n = 8;
 
         // }
         // else if(i == 1){ // i == 1, load in size 4 and compute size 8
-        //     dma_out_tile_k = 4;
-        //     dma_in_tile_k = 4;
-        //     comp_tile_k = 8;
+        //     dma_out_tile_n = 4;
+        //     dma_in_tile_n = 4;
+        //     comp_tile_n = 8;
         // }
         // else if (i == 2){ // i == 2, store size 8 and compute size 4 
-        //     dma_out_tile_k = 8;
-        //     comp_tile_k = 4;
+        //     dma_out_tile_n = 8;
+        //     comp_tile_n = 4;
         // }
         // else if (i == 3){ // i == 3, store size 4
-        //     dma_out_tile_k = 4;
+        //     dma_out_tile_n = 4;
         // }
    
         int mylda=  args->lda;
@@ -226,8 +226,8 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                         //                       tile_c_size);
                         // }
                         // snrt_dma_wait_all();
-                        snrt_dma_store_2d_tile(largs->c, lc[buff_idx],
-                                               dma_out_m_abs, dma_out_n, dma_out_tile_m,
+                        snrt_dma_store_2d_remainder_tile(largs->c, lc[buff_idx],
+                                               dma_out_m_abs, dma_out_n, tile_m, tile_n,dma_out_tile_m,
                                                dma_out_tile_n, args->ldc, largs->prec);
                     }
                     snrt_dma_wait_all();
@@ -313,8 +313,8 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                             //                   snrt_cluster()->zeromem.mem,
                             //                   tile_c_size);
                             // }
-                            snrt_dma_load_2d_tile(lc[c_buff_idx], largs->c,
-                                                  dma_in_m_abs, dma_in_n,
+                            snrt_dma_load_2d_remainder_tile(lc[c_buff_idx], largs->c,
+                                                  dma_in_m_abs, dma_in_n, tile_m, tile_n,
                                                   dma_in_tile_m, dma_in_tile_n, args->ldc,
                                                   largs->prec);
                         }
