@@ -20,7 +20,7 @@
 #include "snrt.h"
 
 int main() {
-    int retcode = matmul_padded(&args,8,32,8);
+    int retcode = matmul_padded(&args,m_unpadded,n_unpadded,k_unpadded);
 
     snrt_cluster_hw_barrier();
 

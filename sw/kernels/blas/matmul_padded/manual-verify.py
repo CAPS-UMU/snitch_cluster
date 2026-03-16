@@ -22,11 +22,20 @@ off_by_16 = [ 62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.,62.
 #8x16x16w8-16-8up8x16x5
 
 def padN(M,N,K,m,n,k,up_M,up_N,up_K,beta):
-     # a_list =[2]*(M*K) # [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
-     # b_list =[3]*(K*N) # [x+2 for x in range(1,K*N+1)]
-     a_list = [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
-     b_list = [x+2 for x in range(1,K*N+1)]
+     a_list = [2]*(M*K)#[x+2 for x in range(5,M*K+5)]#[2]*(M*K)
+     a_list[up_M*up_K:len(a_list)] = [5]*(M*K-(up_M*up_K))
+     b_list = [3]*(K*N)#[x+2 for x in range(1,K*N+1)]
+     b_list[up_K*up_N:len(b_list)] = [5]*(K*N-(up_K*up_N))
      c_list = [1]*(M*N)
+     c_list[up_M*up_N:len(c_list)]= [5]*(M*N-(up_M*up_N))
+     print(b_list)
+     print(c_list)
+     a_list =[2]*(M*K) # [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
+     b_list =[3]*(K*N) # [x+2 for x in range(1,K*N+1)]
+     # a_list = [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
+     # b_list = [x+2 for x in range(1,K*N+1)]
+     c_list = [1]*(M*N)
+	
      a = np.reshape(a_list, (M,K))
      b = np.reshape(b_list, (K,N))
      c = np.reshape(c_list, (M,N))

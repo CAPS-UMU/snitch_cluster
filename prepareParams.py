@@ -40,7 +40,7 @@ def main():
         n=int(sys.argv[6])
         k=int(sys.argv[7])
         padding = sys.argv[8]
-        include_unpadded = False
+       # print(f"my vals are {M} {N} {K} {m} {n} {k} ")
         paddedM = m * (M // m) + m if (M % m) != 0 else M
         paddedN = n * (N // n) + n if (N % n) != 0 else N
         paddedK = k * (K // k) + k if (K % k) != 0 else K
@@ -50,7 +50,6 @@ def main():
             else:
                 print("\t",end='')
                 print(f"prepareParams.py: gemmDir env var {padding} contains the word padded, so we are setting params for padding.")
-                include_unpadded = True
         m_tiles=int(paddedM/m)
         n_tiles=int(paddedN/n)
         k_tiles=int(paddedK/k)
@@ -63,10 +62,9 @@ def main():
         data["m_tiles"]=m_tiles
         data["n_tiles"]=n_tiles
         data["k_tiles"]=k_tiles
-        if include_unpadded:
-            data["m_unpadded"]=M 
-            data["n_unpadded"]=N 
-            data["k_unpadded"]=K
+        data["m_unpadded"]=M 
+        data["n_unpadded"]=N 
+        data["k_unpadded"]=K
         f = open(fp, "w")   # 'r' for reading and 'w' for writing 
         f.write(f"{json.dumps(data)}")
         f.close()  

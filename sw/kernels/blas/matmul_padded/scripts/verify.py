@@ -27,16 +27,22 @@ class GemmVerifier(Verifier):
         super().__init__()
         self.prec = self.get_input_from_symbol('prec', 'uint32_t')[0]
 
-    def get_actual_results(self):
-        return self.get_output_from_symbol(self.OUTPUT_UIDS[0], ctype_from_precision_t(self.prec))
+    def get_actual_results_unpadded(self):
+        M = self.get_input_from_symbol('m_unpadded', 'uint32_t')[0]
+        N = self.get_input_from_symbol('n_unpadded', 'uint32_t')[0]
+        c = self.get_output_from_symbol(self.OUTPUT_UIDS[0], ctype_from_precision_t(self.prec)).flatten()[0:int(M*N)]
+        return c
 
-    def get_expected_results(self):
-        a = self.get_input_from_symbol('a', ctype_from_precision_t(self.prec))
-        b = self.get_input_from_symbol('b', ctype_from_precision_t(self.prec))
-        c = self.get_input_from_symbol('c', ctype_from_precision_t(self.prec))
-        m = self.get_input_from_symbol('m', 'uint32_t')[0]
-        n = self.get_input_from_symbol('n', 'uint32_t')[0]
-        k = self.get_input_from_symbol('k', 'uint32_t')[0]
+    def get_expected_results_unpadded(self):
+        M = self.get_input_from_symbol('m_unpadded', 'uint32_t')[0]
+        N = self.get_input_from_symbol('n_unpadded', 'uint32_t')[0]
+        K = self.get_input_from_symbol('k_unpadded', 'uint32_t')[0]
+        a = self.get_input_from_symbol('a', ctype_from_precision_t(self.prec)).flatten()[0:M*K]
+        b = self.get_input_from_symbol('b', ctype_from_precision_t(self.prec)).flatten()[0:K*N]
+        c = self.get_input_from_symbol('c', ctype_from_precision_t(self.prec)).flatten()[0:M*N]
+        m = M
+        n = N
+        k = K
         beta = self.get_input_from_symbol('beta', 'uint32_t')[0]
         transb = self.get_input_from_symbol('transb', 'uint32_t')[0]
 
@@ -51,8 +57,8 @@ class GemmVerifier(Verifier):
         return GemmDataGen().exact_golden_model(1, a, b, beta, c).flatten()
 
     def check_results(self, *args):
-        print(self.get_actual_results())
-        print(self.get_expected_results())
+        print(self.get_actual_results_unpadded())
+        print(self.get_expected_results_unpadded())
         return super().check_results(*args, rtol=self.ERR_THRESHOLD[self.prec])
 
 

@@ -124,30 +124,57 @@ class GemmDataGen(du.DataGen):
         self.validate(**kwargs)
 
         m, n, k = kwargs['m'], kwargs['n'], kwargs['k']
-
+        up_M, up_N, up_K = kwargs['m_unpadded'], kwargs['n_unpadded'], kwargs['k_unpadded']
+        del kwargs['m_unpadded']
+        del kwargs['n_unpadded']
+        del kwargs['k_unpadded']
         prec, _ = self.infer_implementation(kwargs['gemm_fp'])
 
         ctype = du.ctype_from_precision_t(prec)
 
-        a = du.generate_random_array((m, k), prec, seed=42)
-        b = du.generate_random_array((k, n), prec, seed=42)
-        c = du.generate_random_array((m, n), prec, seed=42)
+        # a = du.generate_random_array((m, k), prec, seed=42)
+        # b = du.generate_random_array((k, n), prec, seed=42)
+        # c = du.generate_random_array((m, n), prec, seed=42)
+        # only allocate what we need
+        a = du.generate_random_array((up_M, up_K), prec, seed=42)
+        b = du.generate_random_array((up_K, up_N), prec, seed=42)
+        c = du.generate_random_array((up_M, up_N), prec, seed=42)
 
         # for pad N function
-        up_N = 32
-        M = m
-        N = n
-        K = k
-        a_list = [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
-        b_list = [x+2 for x in range(1,K*N+1)]
-        # a_list = [2]*(M*K)#[x+2 for x in range(5,M*K+5)]#[2]*(M*K)
-        # b_list = [3]*(K*N)#[x+2 for x in range(1,K*N+1)]
-        c_list = [1]*(M*N)
-        a = np.reshape(a_list, (M,K))
-        b = np.reshape(b_list, (K,N))
-        c = np.reshape(c_list, (M,N))
-        b[:,up_N:] = 95 
-        c[:,up_N:] = -2
+        #up_N = 32
+        # M = m
+        # N = n
+        # K = k
+        # # a_list = [x+2 for x in range(5,up_M*up_K+5)] #[2]*(M*K)
+        # # b_list = [x+2 for x in range(1,up_K*up_N+1)]
+        # a_list = [2]*(up_M*up_K)#[x+2 for x in range(5,M*K+5)]#[2]*(M*K)
+        # b_list = [3]*(up_K*up_N)#[x+2 for x in range(1,K*N+1)]
+        # c_list = [1]*(up_M*up_N)
+        # a = np.reshape(a_list, (up_M,up_K))
+        # b = np.reshape(b_list, (up_K,up_N))
+        # c = np.reshape(c_list, (up_M,up_N))
+        # b[:,up_N:] = 95 
+        # c[:,up_N:] = -2
+
+    #     M = up_M#m
+    #     N = up_N#n
+    #     K = up_K#k
+    #     # a_list = [x+2 for x in range(5,M*K+5)] #[2]*(M*K)
+    #     # b_list = [x+2 for x in range(1,K*N+1)]
+    #     # # a_list = [2]*(M*K)#[x+2 for x in range(5,M*K+5)]#[2]*(M*K)
+    #     # # b_list = [3]*(K*N)#[x+2 for x in range(1,K*N+1)]
+    #     # c_list = [1]*(M*N)
+    #     a_list = [2]*(M*K)#[x+2 for x in range(5,M*K+5)]#[2]*(M*K)
+    #    # a_list[up_M*up_K:len(a_list)] = [5]*(M*K-(up_M*up_K))
+    #     b_list = [3]*(K*N)#[x+2 for x in range(1,K*N+1)]
+    #    # b_list[up_K*up_N:len(b_list)] = [5]*(K*N-(up_K*up_N))
+    #     c_list = [1]*(M*N)
+    #     #c_list[up_M*up_N:len(c_list)]= [5]*(M*N-(up_M*up_N))
+    #     a = np.reshape(a_list, (M,K))
+    #     b = np.reshape(b_list, (K,N))
+    #     c = np.reshape(c_list, (M,N))
+        # b[:,up_N:] = 95 
+        # c[:,up_N:] = -2
 
         # for manual-verify.py's 
         # printAnswerFocusOnB function
@@ -208,6 +235,9 @@ class GemmDataGen(du.DataGen):
         m_uid = 'm'
         n_uid = 'n'
         k_uid = 'k'
+        m_unpadded_uid = 'm_unpadded'
+        n_unpadded_uid = 'n_unpadded'
+        k_unpadded_uid = 'k_unpadded'
         prec_uid = 'prec'
         beta_uid = 'beta'
         transb_uid = 'transb'
@@ -218,10 +248,16 @@ class GemmDataGen(du.DataGen):
             'b': b_uid,
             'c': c_uid,
             'prec': prec_uid,
-            'lda': m if kwargs['transa'] else k,
-            'ldb': k if kwargs['transb'] else n,
-            'ldc': n,
+            'lda': up_M if kwargs['transa'] else up_K,
+            'ldb': up_K if kwargs['transb'] else up_N,
+            'ldc': up_N,
+            # 'lda': m if kwargs['transa'] else k,
+            # 'ldb': k if kwargs['transb'] else n,
+            # 'ldc': n,
         }
+        # cfg['lda'] = m_unpadded_uid if kwargs['transa'] else k_unpadded_uid,
+        # cfg['ldb'] = k_unpadded_uid if kwargs['transb'] else n_unpadded_uid,
+        # cfg['ldc'] = n_unpadded_uid,
         cfg['m'] = m_uid
         cfg['n'] = n_uid
         cfg['k'] = k_uid
@@ -241,6 +277,9 @@ class GemmDataGen(du.DataGen):
         header += [du.format_scalar_definition('extern const uint32_t', m_uid, m)]
         header += [du.format_scalar_definition('extern const uint32_t', n_uid, n)]
         header += [du.format_scalar_definition('extern const uint32_t', k_uid, k)]
+        header += [du.format_scalar_definition('extern const uint32_t', m_unpadded_uid, up_M)]
+        header += [du.format_scalar_definition('extern const uint32_t', n_unpadded_uid, up_N)]
+        header += [du.format_scalar_definition('extern const uint32_t', k_unpadded_uid, up_K)]
         header += [du.format_scalar_definition('extern const uint32_t', beta_uid, kwargs['beta'])]
         header += [du.format_scalar_definition('extern const uint32_t', transb_uid,
                                                kwargs['transb'])]
