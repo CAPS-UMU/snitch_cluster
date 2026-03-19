@@ -14,7 +14,6 @@
 
 #pragma once
 
-
 /**
  * @brief Performs a General Matrix Multiplication (GEMM) operation on a
  *        Snitch-based multiple-cluster architecture with support for
@@ -40,7 +39,8 @@
  * @note Current implementation assumes that `parallelize_m` and
  *       `parallelize_k` options are mutually exclusive.
  */
-static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint32_t n_unpad, uint32_t k_unpad) {
+static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
+                                uint32_t n_unpad, uint32_t k_unpad) {
 #ifndef JOB_ARGS_PRELOADED
     // Copy the arguments to local memory
     gemm_args_t *largs = (gemm_args_t *)snrt_l1_alloc_cluster_local(
@@ -68,16 +68,15 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
     uint32_t tile_a_size = tile_m * tile_k * largs->prec;
     uint32_t tile_b_size = tile_k * tile_n * largs->prec;
     uint32_t tile_c_size = tile_m * tile_n * largs->prec;
-   
 
     // Calculate remainder tiles (the final tile in each dimension could be smaller than normal)
     uint32_t tile_m_rem = (m_unpad % tile_m) != 0 ? (m_unpad % tile_m) : tile_m;
     uint32_t tile_n_rem = (n_unpad % tile_n) != 0 ? (n_unpad % tile_n) : tile_n;
     uint32_t tile_k_rem = (k_unpad % tile_k) != 0 ? (k_unpad % tile_k) : tile_k;
     // Calculate index when processing a remainder
-    int m_rem_idx = largs->m / tile_m -1;
-    int n_rem_idx = largs->n / tile_n -1;
-    int k_rem_idx = largs->k / tile_k -1;
+    int m_rem_idx = largs->m / tile_m - 1;
+    int n_rem_idx = largs->n / tile_n - 1;
+    int k_rem_idx = largs->k / tile_k - 1;
 
     // Allocate space for local tile buffers in TCDM, unless preloaded
     void *a0, *a1, *b0, *b1, *c0, *c1;
@@ -166,19 +165,17 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
         //     dma_in_tile_n = 4;
         //     comp_tile_n = 8;
         // }
-        // else if (i == 2){ // i == 2, store size 8 and compute size 4 
+        // else if (i == 2){ // i == 2, store size 8 and compute size 4
         //     dma_out_tile_n = 8;
         //     comp_tile_n = 4;
         // }
         // else if (i == 3){ // i == 3, store size 4
         //     dma_out_tile_n = 4;
         // }
-   
-        int mylda=  args->lda;
+
+        int mylda = args->lda;
         int myldb = args->ldb;
         int myldc = args->ldc;
-        
-        
 
         //dma_in_tile_n = 8;
         // If m and k tiles are parallelized across clusters,
@@ -207,31 +204,25 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                 int buff_idx = largs->double_buffer ? dma_out_mn % 2 : 0;
 
                 // Store C
-                // If parallelize_k, then only cluster 0 must writeback
-                if ((snrt_cluster_idx() == 0) || !(largs->parallelize_k)) {
-                    if (largs->partition_banks) {
-                        snrt_dma_2d_to_1d(
-                            (void *)((uintptr_t)largs->c +
-                                     dma_out_m_abs * tile_c_size),
-                            lc[buff_idx], tile_c_size,
-                            banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
-                            SNRT_TCDM_HYPERBANK_WIDTH);
-                    } else { // modified this case
-                        // uint32_t tile_c_rem_size = dma_out_tile_m * dma_out_tile_n * largs->prec;
-                        // if(tile_c_rem_size == tile_c_size){
+                if (dma_out_k == k_rem_idx) {  // only store C on last k iteration
 
-                        //         snrt_dma_start_1d(lc[buff_idx],
-                        //                       snrt_cluster()->zeromem.mem,
-                        //                       tile_c_size);
-                        // }
-                        // snrt_dma_wait_all();
-                        snrt_dma_store_2d_remainder_tile(largs->c, lc[buff_idx],
-                                               dma_out_m_abs, dma_out_n, tile_m, tile_n, dma_out_tile_m,
-                                               dma_out_tile_n, args->ldc, largs->prec);
-                        // snrt_dma_store_2d_tile(largs->c, lc[buff_idx],
-                        //                        dma_out_m_abs, dma_out_n, tile_m, tile_n, args->ldc, largs->prec);
+                    // If parallelize_k, then only cluster 0 must writeback
+                    if ((snrt_cluster_idx() == 0) || !(largs->parallelize_k)) {
+                        if (largs->partition_banks) {
+                            snrt_dma_2d_to_1d(
+                                (void *)((uintptr_t)largs->c +
+                                         dma_out_m_abs * tile_c_size),
+                                lc[buff_idx], tile_c_size,
+                                banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
+                                SNRT_TCDM_HYPERBANK_WIDTH);
+                        } else {  // modified this case
+                            snrt_dma_store_2d_remainder_tile(
+                                largs->c, lc[buff_idx], dma_out_m_abs,
+                                dma_out_n, tile_m, tile_n, dma_out_tile_m,
+                                dma_out_tile_n, args->ldc, largs->prec);
+                        }
+                        snrt_dma_wait_all();
                     }
-                    snrt_dma_wait_all();
                 }
             }
         }
@@ -256,13 +247,14 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                             tile_a_size,
                             banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                             SNRT_TCDM_HYPERBANK_WIDTH);
-                    } else { // this case we modified
+                    } else {  // this case we modified
                         //  snrt_dma_load_2d_tile(
                         //     la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
                         //     tile_m, tile_k, largs->lda, largs->prec);
                         snrt_dma_load_2d_remainder_tile(
-                            la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,tile_m,tile_k,
-                            dma_in_tile_m, dma_in_tile_k, mylda, largs->prec);
+                            la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
+                            tile_m, tile_k, dma_in_tile_m, dma_in_tile_k, mylda,
+                            largs->prec);
                     }
                 }
 
@@ -281,13 +273,14 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                                 tile_b_size,
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
-                        } else { // this case we modified
+                        } else {  // this case we modified
                             // snrt_dma_load_2d_tile(
                             //     lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,
                             //     tile_k, tile_n, largs->ldb, largs->prec);
                             snrt_dma_load_2d_remainder_tile(
-                                lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,tile_k,tile_n,
-                                dma_in_tile_k, dma_in_tile_n, myldb, largs->prec);
+                                lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,
+                                tile_k, tile_n, dma_in_tile_k, dma_in_tile_n,
+                                myldb, largs->prec);
                         }
                     }
                 }
@@ -306,7 +299,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                                 tile_c_size,
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
-                        } else { // this case we modified
+                        } else {  // this case we modified
                             // uint32_t tile_c_rem_size = dma_in_tile_m * dma_in_tile_n * largs->prec;
                             // if(tile_c_rem_size < tile_c_size){
 
@@ -314,10 +307,10 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                             //                   snrt_cluster()->zeromem.mem,
                             //                   tile_c_size);
                             // }
-                            snrt_dma_load_2d_remainder_tile(lc[c_buff_idx], largs->c,
-                                                  dma_in_m_abs, dma_in_n, tile_m, tile_n,
-                                                  dma_in_tile_m, dma_in_tile_n, args->ldc,
-                                                  largs->prec);
+                            snrt_dma_load_2d_remainder_tile(
+                                lc[c_buff_idx], largs->c, dma_in_m_abs,
+                                dma_in_n, tile_m, tile_n, dma_in_tile_m,
+                                dma_in_tile_n, args->ldc, largs->prec);
                         }
                     } else if (dma_in_k == 0) {
                         // Clusters other than the first need to initialize
@@ -371,7 +364,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                 } else if (largs->partition_banks) {
                     sc_st_args.lda = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_k, largs->prec);
-                } else { // we modify this case
+                } else {  // we modify this case
                     sc_st_args.lda = comp_tile_k;
                 }
                 sc_st_args.b = lb[buff_idx];
@@ -380,7 +373,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                 } else if (largs->partition_banks) {
                     sc_st_args.ldb = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_n, largs->prec);
-                } else { // we modify this case
+                } else {  // we modify this case
                     sc_st_args.ldb = comp_tile_n;
                 }
                 sc_st_args.beta = beta_k;
@@ -388,7 +381,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad, uint3
                 if (largs->partition_banks) {
                     sc_st_args.ldc = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_n, largs->prec);
-                } else { // we modify this case
+                } else {  // we modify this case
                     sc_st_args.ldc = comp_tile_n;
                 }
                 sc_st_args.m = comp_tile_m;

@@ -122,7 +122,12 @@ check(){
                                 echo -e "\t\toutput.txt does not exist."
                             fi
                         else
-                            echo -e "\t\t$buildName... probably OK"
+                            if [[ $(python verify.py "$gemmDir/$buildName/verify-output.txt"; echo $?) != "0" ]];
+                            then
+                                echo -e "\t\t$buildName...... OK"
+                            else
+                                echo -e "\t\t$buildName...... ERROR"
+                            fi
                 fi
                 
               
