@@ -24,6 +24,7 @@ k=${10}
 here=${11}
 elf=$(basename $gemmDir)
 
+
 genTrace(){
     gen_trace="$here/util/trace/gen_trace.py"
     llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
@@ -40,38 +41,42 @@ genTrace(){
     return 0
 }
 
-echo -e "\trun_and_extract_time.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k"
+main(){
 
-cd $buildDir
-correct=$(../scripts/verify.py snitch_cluster.vlt $elf.elf > verify-output.txt; echo $?)
-if [[ "$correct" != "0" ]]; 
-then
-    echo -e "\trun_and_extract_time.sh: Error: tiled $elf did not produce expected result! Errno $correct"
-    return 1
-else
-    echo -e "\trun_and_extract_time.sh: Ran $elf correctly."
-fi
+    echo -e "\trun_and_extract_time.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k"
 
-# extract timing info
-genTrace logs "trace_hart_00000"
-genTrace logs "trace_hart_00001"
-genTrace logs "trace_hart_00002"
-genTrace logs "trace_hart_00003"
-genTrace logs "trace_hart_00004"
-genTrace logs "trace_hart_00005"
-genTrace logs "trace_hart_00006"
-genTrace logs "trace_hart_00007"
-genTrace logs "trace_hart_00008" dma
-python $extractKernelTime $expName $logs $M $N $K $m $n $k
-correct=$(echo $?)
-if [[ "$correct" == "0" ]]; 
-then
-    echo -e "\trun_and_extract_time.sh: Successfully exported timing information. Deleting logs..."
-    # delete huge log files
-    cd $logs
-    rm -rf *.dasm
-else
-    echo -e "\trun_and_extract_time.sh: Error exporting timing info!"
-fi
+    cd $buildDir
+    correct=$($gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf > verify-output.txt; echo $?)
+    if [[ "$correct" != "0" ]]; 
+    then
+        echo -e "\trun_and_extract_time.sh: Error: tiled $elf did not produce expected result! Errno $correct"
+        return 1
+    else
+        echo -e "\trun_and_extract_time.sh: Ran $elf correctly."
+    fi
 
+    # extract timing info
+    genTrace logs "trace_hart_00000"
+    genTrace logs "trace_hart_00001"
+    genTrace logs "trace_hart_00002"
+    genTrace logs "trace_hart_00003"
+    genTrace logs "trace_hart_00004"
+    genTrace logs "trace_hart_00005"
+    genTrace logs "trace_hart_00006"
+    genTrace logs "trace_hart_00007"
+    genTrace logs "trace_hart_00008" dma
+    python $extractKernelTime $expName $logs $M $N $K $m $n $k
+    correct=$(echo $?)
+    if [[ "$correct" == "0" ]]; 
+    then
+        echo -e "\trun_and_extract_time.sh: Successfully exported timing information. Deleting logs..."
+        # delete huge log files
+        cd $logs
+        rm -rf *.dasm
+    else
+        echo -e "\trun_and_extract_time.sh: Error exporting timing info!"
+    fi
+}
+
+main
 

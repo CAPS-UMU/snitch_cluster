@@ -57,9 +57,11 @@ class GemmVerifier(Verifier):
         return GemmDataGen().exact_golden_model(1, a, b, beta, c).flatten()
 
     def check_results(self, *args):
-        print(self.get_actual_results_unpadded())
-        print(self.get_expected_results_unpadded())
-        return super().check_results(*args, rtol=self.ERR_THRESHOLD[self.prec])
+        actual=self.get_actual_results_unpadded()
+        expected=self.get_expected_results_unpadded()
+        print(actual)
+        print(expected)
+        return super().check_results(actual,expected, rtol=self.ERR_THRESHOLD[self.prec])
 
 
 if __name__ == "__main__":

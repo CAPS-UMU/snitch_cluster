@@ -26,9 +26,6 @@ def main():
         original = all_files[0]
         rest = all_files[1:]
         orig = pd.read_csv(original)
-        # super clunkly way to get rid of the "unamed" first column
-        # orig = orig[["core0","core1","core2","core3","core4","core5","core6","core7","dma","Kernel Time","FakeNN JSON Name"]]
-        # print(orig[["core0","core1","core2","core3","core4","core5","core6","core7","dma","Kernel Time","FakeNN JSON Name"]])
         for r in rest:
             if not os.path.exists(r):
                 print(f"Skipping {r}")
@@ -42,9 +39,8 @@ def main():
         # file name for combined data is the original csv name with "results" appended to the end
         outputFile = f'{f[:-4]}-results.csv'
         df = df.merge(orig, how='outer')
-        df = df.drop("Unnamed: 0",axis=1)
         print(outputFile)
-        df.to_csv(outputFile)
+        df.to_csv(outputFile,index=False)
        
 
 if __name__ == "__main__":
