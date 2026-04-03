@@ -38,9 +38,21 @@ def main():
                 # print(rdf.iloc[0])
         # file name for combined data is the original csv name with "results" appended to the end
         outputFile = f'{f[:-4]}-results.csv'
+        df = df[["FakeNN JSON Name"]] # only take the unique id from the search space
         df = df.merge(orig, how='outer')
         print(outputFile)
         df.to_csv(outputFile,index=False)
+        # if there are rows without timing information, emit a second file with only the timed rows
+        if df["dma"].isnull().any() :
+            print("some of the rows do not contain timing information")
+            unskipped = df[df["dma"].notnull()] # df[df['col'].notnull()] ]
+            outputFile = f'{f[:-4]}-results-unskipped.csv'
+            unskipped.to_csv(outputFile,index=False)
+            print(outputFile)
+            skipped = df[df["dma"].isnull()]
+            outputFile = f'{f[:-4]}-results-skipper.csv'
+            skipped.to_csv(outputFile,index=False)
+            print(outputFile)
        
 
 if __name__ == "__main__":

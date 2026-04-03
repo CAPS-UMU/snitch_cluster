@@ -81,9 +81,10 @@ check(){
             n=$(echo $tail | grep -oE $eatNum)
             tail=${tail#*-}
             k=$(echo $tail | grep -oE $eatNum)
-            buildDir="$experimentDir/"$M"x"$N"x"$K"w"$m"-"$n"-"$k"/build"
-            logs="$buildDir/logs"
             buildName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
+            buildDir="$experimentDir/"$buildName"/build"
+            logs="$buildDir/logs"
+           #echo "$buildDir"
             exists=$(ls $buildDir &> /dev/null; echo $?)
             if [[ "$exists" != "0" ]]; 
             then

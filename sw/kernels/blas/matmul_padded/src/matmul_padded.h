@@ -59,12 +59,6 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
     uint32_t tile_n = largs->n / largs->n_tiles;
     uint32_t tile_k = largs->k / largs->k_tiles;
 
-    //TEMPORARILY
-    // tile_m= 8;
-    // tile_n=16;
-    // tile_k=16;
-    //TEMPORARILY
-
     uint32_t tile_a_size = tile_m * tile_k * largs->prec;
     uint32_t tile_b_size = tile_k * tile_n * largs->prec;
     uint32_t tile_c_size = tile_m * tile_n * largs->prec;
@@ -146,38 +140,11 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
         int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
         int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
         int comp_tile_k = comp_k == k_rem_idx ? tile_k_rem : tile_k;
-        // int dma_in_tile_m = 8;
-        // int dma_in_tile_n = 12;
-        // int dma_in_tile_k = 16;
-        // int dma_out_tile_m = 8;
-        // int dma_out_tile_n = 12;
-        // int dma_out_tile_k = 16;
-        // int comp_tile_m = 8;
-        // int comp_tile_n = 12;
-        // int comp_tile_k = 16;
-        //                 // i = 0, only load in size 8
-        // if(i == 0){
-        //     dma_in_tile_n = 8;
-
-        // }
-        // else if(i == 1){ // i == 1, load in size 4 and compute size 8
-        //     dma_out_tile_n = 4;
-        //     dma_in_tile_n = 4;
-        //     comp_tile_n = 8;
-        // }
-        // else if (i == 2){ // i == 2, store size 8 and compute size 4
-        //     dma_out_tile_n = 8;
-        //     comp_tile_n = 4;
-        // }
-        // else if (i == 3){ // i == 3, store size 4
-        //     dma_out_tile_n = 4;
-        // }
-
+        
         int mylda = args->lda;
         int myldb = args->ldb;
         int myldc = args->ldc;
 
-        //dma_in_tile_n = 8;
         // If m and k tiles are parallelized across clusters,
         // calculate the absolute m and k indices for each cluster
         int dma_in_m_abs = dma_in_m;
@@ -365,7 +332,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
                     sc_st_args.lda = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_k, largs->prec);
                 } else {  // we modify this case
-                    sc_st_args.lda = comp_tile_k;
+                    sc_st_args.lda = comp_tile_k; // row width of A tile
                 }
                 sc_st_args.b = lb[buff_idx];
                 if (largs->transb) {
@@ -374,7 +341,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
                     sc_st_args.ldb = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_n, largs->prec);
                 } else {  // we modify this case
-                    sc_st_args.ldb = comp_tile_n;
+                    sc_st_args.ldb = comp_tile_n; // row width of B tile
                 }
                 sc_st_args.beta = beta_k;
                 sc_st_args.c = lc[c_buff_idx];
@@ -382,7 +349,7 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
                     sc_st_args.ldc = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_n, largs->prec);
                 } else {  // we modify this case
-                    sc_st_args.ldc = comp_tile_n;
+                    sc_st_args.ldc = comp_tile_n; // row width of C tile
                 }
                 sc_st_args.m = comp_tile_m;
                 sc_st_args.n = comp_tile_n;

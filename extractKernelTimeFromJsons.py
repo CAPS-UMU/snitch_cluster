@@ -61,7 +61,7 @@ def main():
         cols=('core0','core1','core2','core3','core4','core5','core6','core7','dma','Kernel Time')
         df = pd.DataFrame(data=timeData, columns=cols)
         df['FakeNN JSON Name']=expName
-        df.to_csv(f"{logs}/{expName}.csv")
+        df.to_csv(f"{logs}/{expName}.csv", index=False)
         return 0
 
 if __name__ == "__main__":
