@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import json
 import os.path
+import math
 print("\n\t\textractKernelTimeFromJsons.py: ATTN: only many_gemms.sh should call this script.")
 
 def main():
@@ -19,9 +20,12 @@ def main():
         M=int(sys.argv[3])
         N=int(sys.argv[4])
         K=int(sys.argv[5])
-        m_tiles=int(M/int(sys.argv[6]))
-        n_tiles=int(N/int(sys.argv[7]))
-        k_tiles=int(K/int(sys.argv[8]))
+        m = int(sys.argv[6])
+        n = int(sys.argv[7])
+        k = int(sys.argv[8])
+        m_tiles=math.ceil(M/m)
+        n_tiles=math.ceil(N/n)
+        k_tiles=math.ceil(K/k)
         cluster_tiles=m_tiles*n_tiles*k_tiles
         regionCount=2*cluster_tiles+1
         computeCores=[
@@ -34,6 +38,16 @@ def main():
             f"{logs}/hart-trace_hart_00006-perf.json",
             f"{logs}/hart-trace_hart_00007-perf.json",
         ]
+        # reality check
+        for c in computeCores:
+            with open(c) as json_file:
+                data = json.load(json_file)
+                if regionCount != len(data):
+                    if m % 8 == 0:
+                        raise Exception(f"ATTENTION! DIFFERENT ERROR! JSON {c} contains an an unexpected number of regions: Expected:{regionCount} Actual:{len(data)}")
+                    else:
+                        raise Exception(f"KNOWN ERROR: JSON {c} contains an an unexpected number of regions, WHICH MAKES A LITTLE SENSE: Expected:{regionCount} Actual:{len(data)}")
+        # end of reality check
         row=[]
         minStart=-1
         maxEnd=0
@@ -52,10 +66,12 @@ def main():
                 if end > maxEnd:
                     maxEnd = end
                 print(f"{c}: start: {start} end:{end} end_fpss:{end_fpss}")
-        with open(f"{logs}/hart-trace_hart_00008-perf.json") as json_file:
+        dma = f"{logs}/hart-trace_hart_00008-perf.json"
+        with open(dma) as json_file:
             data = json.load(json_file)
             dma_cycles=data[0]["cycles"]
             row.append(dma_cycles)
+        print(f"{dma} (dma): cycles: {dma_cycles}")
         row.append(maxEnd-minStart + 1)
         timeData=np.array(row, dtype='int').reshape(1,10)
         cols=('core0','core1','core2','core3','core4','core5','core6','core7','dma','Kernel Time')
