@@ -6,6 +6,17 @@ import os.path
 import math
 print("\n\t\textractKernelTimeFromJsons.py: ATTN: only many_gemms.sh should call this script.")
 
+
+def regionCount(M,N,K,m,n,k,idx):
+    m_cluster_tiles = int(M / m) * math.ceil(N/n) * math.ceil(K/k)
+    m_rem_cluster_tiles = 1 * math.ceil(N/n) * math.ceil(K/k)
+    rem_m = M % m
+    if idx < rem_m:
+        rc = 2*(m_cluster_tiles + m_rem_cluster_tiles) + 1
+    else:
+        rc = 2 * m_cluster_tiles + 1
+    return rc
+
 def main():
     if len(sys.argv) != 9:
         print("\t",end='')
@@ -23,11 +34,7 @@ def main():
         m = int(sys.argv[6])
         n = int(sys.argv[7])
         k = int(sys.argv[8])
-        m_tiles=math.ceil(M/m)
-        n_tiles=math.ceil(N/n)
-        k_tiles=math.ceil(K/k)
-        cluster_tiles=m_tiles*n_tiles*k_tiles
-        regionCount=2*cluster_tiles+1
+       
         computeCores=[
             f"{logs}/hart-trace_hart_00000-perf.json",
             f"{logs}/hart-trace_hart_00001-perf.json",
@@ -38,25 +45,29 @@ def main():
             f"{logs}/hart-trace_hart_00006-perf.json",
             f"{logs}/hart-trace_hart_00007-perf.json",
         ]
-        # reality check
-        for c in computeCores:
+        cCores = []
+        # region count reality check
+        for idx in range(0,len(computeCores)):
+            c = computeCores[idx]
+            rgc = regionCount(M,N,K,m,n,k,idx)
             with open(c) as json_file:
                 data = json.load(json_file)
-                if regionCount != len(data):
-                    if m % 8 == 0:
-                        raise Exception(f"ATTENTION! DIFFERENT ERROR! JSON {c} contains an an unexpected number of regions: Expected:{regionCount} Actual:{len(data)}")
-                    else:
-                        raise Exception(f"KNOWN ERROR: JSON {c} contains an an unexpected number of regions, WHICH MAKES A LITTLE SENSE: Expected:{regionCount} Actual:{len(data)}")
-        # end of reality check
+                #print(f"In the current json, there are {len(data)} regions.")
+                if rgc != len(data):
+                    raise Exception(f"PARSE ERROR! JSON {c} contains an an unexpected number of regions: Expected:{rgc} Actual:{len(data)}")
+                else:
+                    cCores.append((c,rgc))
+
+      # end of reality check
         row=[]
         minStart=-1
         maxEnd=0
-        for c in computeCores:
+        for (c,rgc) in cCores:
             with open(c) as json_file:
                 data = json.load(json_file)
                 start=data[1]["start"] # second region from beginning
-                end=data[regionCount-2]["end"] # second to last region
-                end_fpss=data[regionCount-2]["end_fpss"]
+                end=data[rgc-2]["end"] # second to last region
+                end_fpss=data[rgc-2]["end_fpss"]
                 cycles=max(end,end_fpss) - start
                 row.append(int(cycles))
                 if minStart == -1:
