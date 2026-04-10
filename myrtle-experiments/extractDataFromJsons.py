@@ -4,62 +4,138 @@ import numpy as np
 import json
 import os.path
 import math
-print("\n\t\textractDataFromJsons.py: ATTN: only many_gemms.sh should call this script.")
 
-def stallCycles(core_json,rgc,idx):
+print(
+    "\n\t\textractDataFromJsons.py: ATTN: only many_gemms.sh should call this script."
+)
+
+
+def checkCorrectness(df):
+    dma_cc_e2e_diffs = []
+    for i in range(0, 8):
+        # assert that global sim and compute complex end-to-end time is the same for each core
+        assert (df[f"Global Sim E2E_cc_{i}"] == df[f"Core Complex E2E_cc_{i}"]).all()
+        # assert the sum of all regions == sum of overlap stall + compute + prologue + epilogue
+        assert (
+            df[f"Sum Region Cycles_cc_{i}"] == df[f"Sum Compute+Stall+Pro+Epi_cc_{i}"]
+        ).all()
+        # sum of all regions and compute complex end-to-end time should differ by the number of regions
+        assert ((df[f"Core Complex E2E_cc_{i}"] - df[f'cc_tiles_cc_{i}'])== df[f"Sum Region Cycles_cc_{i}"]).all()
+        dma_cc_e2e_diffs.append(
+            (abs(df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"])).max()
+        )
+      
+    print("\t\t",end='')
+    print(f"max e2e dma vs cc diff time is {max(dma_cc_e2e_diffs)}: {dma_cc_e2e_diffs}")
+
+    # dma E2E global time and each compute core's E2E global time should differ by an acceptably small amount
+    threshold = 30
+    assert max(dma_cc_e2e_diffs) < threshold  # what is an acceptable threshold??
+   
+    return True
+
+
+# Every trace file contains a group of timed regions
+# For each compute core's trace, we extract information by
+# taking the sum over a set/subset of the timed regions
+def parseComputeCoreTrace(core_json, rgc, idx):
     d = {}
-    prologue = core_json[0]
-    epilogue = core_json[-1]
-    overlapStallTime = 0
-    rawComputeTime = 0
+    # Global simulation end to end time for the compute core
+    tstart = core_json[0]["tstart"]
+    tend = core_json[rgc - 1]["tend"]
+    d[f"Global Sim E2E_cc_{idx}"] = tend - tstart + 1
+    # Compute Complex end to end time for the compute core
+    start = core_json[0]["start"]
+    end = max(core_json[0]["end_fpss"], core_json[rgc - 1]["end"])
+    d[f"Core Complex E2E_cc_{idx}"] = end - start + 1
+    # Sum of "cycles" over all trace regions
+    sum = 0
+    for region in core_json:
+        sum = sum + region["cycles"]
+    d[f"Sum Region Cycles_cc_{idx}"] = sum
+
+    # Double buffering epilogue and prologue
+    prologueTime = core_json[0]["cycles"]
+    epilogueTime = core_json[-1]["cycles"]
+    d[f"Before Computation_cc_{idx}"] = prologueTime
+    d[f"After Computation_cc_{idx}"] = epilogueTime
+    # legacy "Kernel Time" calculation
+    coreComplexStart = core_json[1]["start"]  # start time of first compute region
+    end = core_json[rgc - 2]["end"]  # coreComplex end
+    end_fpss = core_json[rgc - 2]["end_fpss"]  # end of last floating point instruction
+    latestEnd = max(end, end_fpss)
+    cycles = latestEnd - coreComplexStart + 1
+    d[f"core{idx}"] = int(cycles)
+    # Overlap Stall Time: time waiting for next tile to copy in, results to write out, or for other compute cores to finish
     # region 0 is the proglogue
     # region 1 is the first compute tile
     # region 2 is the time spent after the first compute tile and before the next one
     # we want every other region starting from region 2 until the epilogue
-    for i in range(2,rgc,2):
+    overlapStallTime = 0
+    for i in range(2, rgc - 1, 2):
         overlapStallTime = overlapStallTime + core_json[i]["cycles"]
+    # Raw Compute Time: cumulative time spent processing a tile
     # region 0 is the proglogue
     # region 1 is the first compute tile
     # region 2 is the time spent after the first compute tile and before the next one
     # we want every other region starting from region 1 until the epilogue
-    for i in range(1,rgc,2):
+    check = 0
+    rawComputeTime = 0
+    for i in range(1, rgc - 1, 2):
         rawComputeTime = rawComputeTime + core_json[i]["cycles"]
-    d[f"Before Computation_cc_{idx}"] = prologue["cycles"]
-    d[f"After Computation_cc_{idx}"] = epilogue["cycles"]
+        check = check + 1
+    cc_tiles = (rgc - 1) / 2
+    # reality check
+    if check != cc_tiles:
+        raise Exception(
+            f"Error: Number of raw compute regions ({check}) is not the same as compute core tile count ({cc_tiles})!"
+        )
     d[f"Overlap Stall Time_cc_{idx}"] = overlapStallTime
     d[f"Raw Compute Time_cc_{idx}"] = rawComputeTime
-    d[f"cc_tiles_cc_{idx}"] = (rgc-1) / 2
-    return (list(d.values()),list(d.keys()))
+    d[f"Sum Raw Compute + Overlap Stall_cc_{idx}"] = rawComputeTime + overlapStallTime
+    d[f"Sum Compute+Stall+Pro+Epi_cc_{idx}"] = (
+        rawComputeTime + overlapStallTime + prologueTime + epilogueTime
+    )
+    d[f"cc_tiles_cc_{idx}"] = (rgc - 1) / 2
+    return d
 
-def regionCount(M,N,K,m,n,k,idx):
-    m_cluster_tiles = int(M / m) * math.ceil(N/n) * math.ceil(K/k)
-    m_rem_cluster_tiles = 1 * math.ceil(N/n) * math.ceil(K/k)
+
+def regionCount(M, N, K, m, n, k, idx):
+    m_cluster_tiles = int(M / m) * math.ceil(N / n) * math.ceil(K / k)
+    m_rem_cluster_tiles = 1 * math.ceil(N / n) * math.ceil(K / k)
     rem_m = M % m
     if idx < rem_m:
-        rc = 2*(m_cluster_tiles + m_rem_cluster_tiles) + 1
+        rc = 2 * (m_cluster_tiles + m_rem_cluster_tiles) + 1
     else:
         rc = 2 * m_cluster_tiles + 1
     return rc
 
+
 def main():
     if len(sys.argv) != 9:
-        print("\t",end='')
-        print(f"USAGE: Requires two string arguments, experiment name and the full path to the experiment's logs folder, followed by M N K m n k.\nYou passed in {len(sys.argv)} args")
+        print("\t", end="")
+        print(
+            f"USAGE: Requires two string arguments, experiment name and the full path to the experiment's logs folder, followed by M N K m n k.\nYou passed in {len(sys.argv)} args"
+        )
     else:
-        expName=sys.argv[1]
-        logs=sys.argv[2]
+        expName = sys.argv[1]
+        logs = sys.argv[2]
         if not os.path.exists(logs):
-            print("\t\t",end='')
-            print(f'extractKernelTimeFromJsons.py: Error: directory {logs} does not exist.')
+            print("\t\t", end="")
+            print(
+                f"extractKernelTimeFromJsons.py: Error: directory {logs} does not exist."
+            )
             return 1
-        M=int(sys.argv[3])
-        N=int(sys.argv[4])
-        K=int(sys.argv[5])
+        M = int(sys.argv[3])
+        N = int(sys.argv[4])
+        K = int(sys.argv[5])
         m = int(sys.argv[6])
         n = int(sys.argv[7])
         k = int(sys.argv[8])
-       
-        computeCores=[
+
+        # trace file names are hardcoded
+        dmaFileName = f"{logs}/hart-trace_hart_00008-perf.json"
+        computeCoreFileNames = [
             f"{logs}/hart-trace_hart_00000-perf.json",
             f"{logs}/hart-trace_hart_00001-perf.json",
             f"{logs}/hart-trace_hart_00002-perf.json",
@@ -69,112 +145,90 @@ def main():
             f"{logs}/hart-trace_hart_00006-perf.json",
             f"{logs}/hart-trace_hart_00007-perf.json",
         ]
-        cCores = []
-        # region count reality check
-        for idx in range(0,len(computeCores)):
-            c = computeCores[idx]
-            rgc = regionCount(M,N,K,m,n,k,idx)
-            with open(c) as json_file:
-                data = json.load(json_file)
-                #print(f"In the current json, there are {len(data)} regions.")
-                if rgc != len(data):
-                    raise Exception(f"PARSE ERROR! JSON {c} contains an an unexpected number of regions: Expected:{rgc} Actual:{len(data)}")
-                else:
-                    cCores.append((c,rgc,idx))
+        computeCores = []
 
-      # end of reality check
-        row=[]
-        minStart=-1
-        maxEnd=0
-        stallCycleRow = []
-        stallCycleCols = []
-        for (c,rgc,idx) in cCores:
+        # region count reality check
+        for idx in range(0, len(computeCoreFileNames)):
+            f = computeCoreFileNames[idx]
+            rgc = regionCount(M, N, K, m, n, k, idx)
+            with open(f) as json_file:
+                data = json.load(json_file)
+                if rgc != len(data):
+                    raise Exception(
+                        f"PARSE ERROR! JSON {f} contains an an unexpected number of regions: Expected:{rgc} Actual:{len(data)}"
+                    )
+                else:
+                    computeCores.append((f, rgc, idx))
+        tracesInfo = {}
+
+        # extract info from compute core traces
+        coreComplexStarts = []
+        coreComplexEnds = []
+        for c, rgc, idx in computeCores:
             with open(c) as json_file:
                 data = json.load(json_file)
-                (stallVals, stallCols) = stallCycles(data,rgc,idx)
-                stallCycleRow = stallCycleRow + stallVals
-                stallCycleCols = stallCycleCols + stallCols
-                start=data[1]["start"] # second region from beginning
-                end=data[rgc-2]["end"] # second to last region
-                end_fpss=data[rgc-2]["end_fpss"]
-                cycles=max(end,end_fpss) - start
-                row.append(int(cycles))
-                if minStart == -1:
-                    minStart=start
-                if start <= minStart:
-                    minStart = start
-                if end > maxEnd:
-                    maxEnd = end
-               # print(f"{c}: start: {start} end:{end} end_fpss:{end_fpss}")
-        dma = f"{logs}/hart-trace_hart_00008-perf.json"
-        with open(dma) as json_file:
+                cc_trace_info = parseComputeCoreTrace(data, rgc, idx)
+                tracesInfo.update(cc_trace_info)
+                coreComplexStarts.append(data[1]["start"])
+                coreComplexEnds.append(data[rgc - 2]["end"])
+        maxEnd = max(coreComplexEnds)
+        minStart = min(coreComplexStarts)
+        tracesInfo["Kernel Time"] = maxEnd - minStart + 1
+
+        # extract info from dma core trace
+        with open(dmaFileName) as json_file:
             data = json.load(json_file)
-            dma_cycles=data[0]["cycles"]
-            row.append(dma_cycles)
-       # print(f"{dma} (dma): cycles: {dma_cycles}")
-        row.append(maxEnd-minStart + 1)
-        cols=['core0','core1','core2','core3','core4','core5','core6','core7','dma','Kernel Time']
-        row = row + stallCycleRow
-        cols = cols + stallCycleCols
-        timeData=np.array(row, dtype='int').reshape(1,len(row))
-        
+            # region count reality check
+            if len(data) != 1:
+                raise Exception(
+                    f"ERROR! Expected DMA trace to contain 1 region but it contains {len(data)}"
+                )
+            dma_cycles = data[0]["cycles"]
+            tracesInfo["dma"] = dma_cycles
+            # Global simulation end to end time for the dma core
+            tstart = data[0]["tstart"]
+            tend = data[0]["tend"]
+            tracesInfo["Global Sim E2E_dma"] = tend - tstart + 1
+
+        # convert dictionary of traces info to data frame
+        row = list(tracesInfo.values())
+        cols = list(tracesInfo.keys())
+        timeData = np.array(row, dtype="int").reshape(1, len(row))
         df = pd.DataFrame(data=timeData, columns=cols)
-        df["Total CC Tiles"] = df["cc_tiles_cc_0"] + df["cc_tiles_cc_1"] + df["cc_tiles_cc_2"] + df["cc_tiles_cc_3"] + df["cc_tiles_cc_4"] + df["cc_tiles_cc_5"] + df["cc_tiles_cc_6"] + df["cc_tiles_cc_7"]
-        df["Overlap Stall Time Total"] = df["Overlap Stall Time_cc_0"] + df["Overlap Stall Time_cc_1"] + df["Overlap Stall Time_cc_2"] + df["Overlap Stall Time_cc_3"] + df["Overlap Stall Time_cc_4"] + df["Overlap Stall Time_cc_5"] + df["Overlap Stall Time_cc_6"] + df["Overlap Stall Time_cc_7"]
-        df["Raw Compute Time Total"] = df["Raw Compute Time_cc_0"] + df["Raw Compute Time_cc_1"] + df["Raw Compute Time_cc_2"] + df["Raw Compute Time_cc_3"] + df["Raw Compute Time_cc_4"] + df["Raw Compute Time_cc_5"] + df["Raw Compute Time_cc_6"] + df["Raw Compute Time_cc_7"]
-        df['FakeNN JSON Name']=expName
-        
+
+        # add more information, some of them strings
+        def sumOverComputeCores(df, cat):
+            return (
+                df[f"{cat}_cc_0"]
+                + df[f"{cat}_cc_1"]
+                + df[f"{cat}_cc_2"]
+                + df[f"{cat}_cc_3"]
+                + df[f"{cat}_cc_4"]
+                + df[f"{cat}_cc_5"]
+                + df[f"{cat}_cc_6"]
+                + df[f"{cat}_cc_7"]
+            )
+
+        df["Total CC Tiles"] = sumOverComputeCores(df, "cc_tiles")
+        df["Overlap Stall Time Total"] = sumOverComputeCores(df, "Overlap Stall Time")
+        df["Raw Compute Time Total"] = sumOverComputeCores(df, "Raw Compute Time")
+        df["FakeNN JSON Name"] = expName
+        for i in range(0, 8):
+            df[f"Diff from dma E2E_cc_{i}"] = abs(
+                df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"]
+            )
+            df[f"Sum Regions - Core Complex E2E_cc_{i}"] = abs(
+                df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"]
+            )
+
+        # check for glaring errors
+        if not checkCorrectness(df):
+            return 1
+        # export results to csv
         df.to_csv(f"{logs}/{expName}.csv", index=False)
         return 0
+
 
 if __name__ == "__main__":
     if main() != 0:
         raise Exception("")
-
-    # # for each input size and tiling scheme
-    # # save a json tiling scheme given m, n, k
-    # # save a json tiling scheme with m=0, n=0, k=0 (golden)
-    # searchSpaceDF=pd.read_csv(sys.argv[1])
-    # for i in range(0, searchSpaceDF.shape[0]):
-    #     theName = searchSpaceDF["FakeNN JSON Name"][i]
-    #     m = searchSpaceDF["m"][i]
-    #     n = searchSpaceDF["n"][i]
-    #     k=searchSpaceDF["k"][i]
-    #     mC = searchSpaceDF["M"][i]
-    #     nC = searchSpaceDF["N"][i]
-    #     kC=searchSpaceDF["K"][i]
-    #     # create json representation of tiling scheme
-    #     data = {}
-    #     node = {}
-    #     node["tile-sizes"] = [[0], [40], [100]]
-    #     node["loop-order"] = [[2,0], [0,0], [1,0]]
-    #     node["dual-buffer"] = True
-    #     dispatchName = f'main$async_dispatch_0_matmul_transpose_b_{mC}x{nC}x{kC}_f64'
-    #     data[dispatchName]=node
-    #     # if ts dne, generate it
-    #     jsonPath = f"{sys.argv[2]}/{theName}.json"
-    #     if not os.path.exists(jsonPath):
-    #         print("\t",end='')
-    #         print(f'generateTileSizeJSONFiles.py: writing to {jsonPath}')
-    #         f = open(jsonPath, "w")   # 'r' for reading and 'w' for writing 
-    #         data[f'{dispatchName}']["tile-sizes"]=[[int(m)], [int(n)], [int(k)]]
-    #         f.write(f"{json.dumps(data)}")
-    #         f.close()
-    #     else:
-    #         print("\t",end='')
-    #         print(f'generateTileSizeJSONFiles.py: using cached {jsonPath}')
-    #     # if golden ts dne, generate it
-    #     theName=f'{mC}x{nC}x{kC}w{0}-{0}-{0}'
-    #     jsonPath = f"{sys.argv[3]}/{theName}.json"
-    #     if not os.path.exists(jsonPath):
-    #         print("\t",end='')
-    #         print(f'generateTileSizeJSONFiles.py: writing to {jsonPath}')
-    #         f = open(jsonPath, "r")   # 'r' for reading and 'w' for writing 
-    #         data[f'{dispatchName}']["tile-sizes"]=[[int(0)], [int(0)], [int(0)]]
-    #         f.write(f"{json.dumps(data)}")
-    #         f.close()
-    #     else:
-    #         print("\t",end='')
-    #         print(f'generateTileSizeJSONFiles.py: using cached {jsonPath}')
-   
-    

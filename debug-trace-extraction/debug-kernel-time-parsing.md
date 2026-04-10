@@ -133,3 +133,17 @@ rem_m = M % m
 RegionsTimed(idx) = idx < rem_m ? 2*(m_iters + m_rem_iters) + 1 : 2 * m_iters + 1
 ```
 
+# Why is the difference between e2e compute core time and the sum of all traced regions so LARGE for 8-8-32??
+
+```
+extractDataFromJsons.py: ATTN: only many_gemms.sh should call this script.
+max e2e dma vs cc diff time is 18: 
+[np.int64(18), np.int64(11), np.int64(10), np.int64(9), np.int64(6), np.int64(5), np.int64(4), np.int64(3)]
+
+max sum region vs cc diff time is 2048: [np.int64(2048), np.int64(2048), np.int64(2048), np.int64(2048), np.int64(2048), np.int64(2048), np.int64(2048), np.int64(2048)] 
+
+128 128 128 8 8 32 with build directory /repo/128x128x128-no-redundant-stores/128x128x128w8-8-32/build
+
+```
+
+It's off by 2048 because for each region it sums, it adds 1 cycle to account for zero-indexing. You should only account for zero-indexing once, but because we are summing up regions' "cycles" count, we accidentally account for zero-offset number of regions times or 1024 compute core tiles * 2 regions for each -> 2048 "error".
