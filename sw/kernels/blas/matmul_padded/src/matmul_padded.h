@@ -11,8 +11,11 @@
 #include <stdint.h>
 
 #include "snrt.h"
+#include "gemm_fp64_myrtle.h"
 
 #pragma once
+
+extern int honeybee;
 
 /**
  * @brief Performs a General Matrix Multiplication (GEMM) operation on a
@@ -111,6 +114,10 @@ static inline int matmul_padded(const gemm_args_t *args, uint32_t m_unpad,
     else
         num_iters += 1;
     // Iterate over all tiles
+    if(honeybee == 76){
+        num_iters = num_iters;
+
+    }
     for (uint32_t i = 0; i < num_iters; i++) {
         // Calculate tile indices (we iterate in k->n->m order)
         int dma_in_i = i;

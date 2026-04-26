@@ -26,6 +26,7 @@ def main():
           subprocess.call(['cat', f"{txtFileDir}right.txt" ])
           return subprocess.call(['diff',  f"{txtFileDir}left.txt",f"{txtFileDir}right.txt" ])
      except ValueError:
+          print("Possible Error Detected! Re-run this verification script.")
           raise Exception("Possible Error Detected! Re-run this verification script.")
           
      

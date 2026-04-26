@@ -25,13 +25,14 @@ SIM_MONITOR_POLL_PERIOD = 2
 
 class SnitchSim:
 
-    def __init__(self, sim_bin: str, snitch_bin: str, simulator: str = None, log: str = None):
+    def __init__(self, sim_bin: str, snitch_bin: str, simulator: str = None, log: str = None,myrtleTimeout:int = 0):
         self.sim_bin = sim_bin
         self.snitch_bin = snitch_bin
         self.sim = None
         self.tmpdir = None
         self.simulator = simulator
         self.log = open(log, 'w+') if log else log
+        self.myrtleTimeout = myrtleTimeout
 
     def start(self):
         # Create FIFOs
@@ -45,8 +46,11 @@ class SnitchSim:
             ipc_arg = f'--ipc {tx_fd},{rx_fd}'
         else:
             ipc_arg = f'--ipc,{tx_fd},{rx_fd}'
-
-        self.sim = subprocess.Popen([self.sim_bin, self.snitch_bin, ipc_arg], stdout=self.log)
+        # to avoid the IPC constructor erasing the myrtleTimeout argument 
+        # with strtok's null character insertions, pass myrtleTimeout as an IPC argument
+        combinedMyrtleIPCArg=f"{ipc_arg},{self.myrtleTimeout}"
+        theArgs = [self.sim_bin, self.snitch_bin, combinedMyrtleIPCArg]
+        self.sim = subprocess.Popen(theArgs, stdout=self.log)
         # Open FIFOs
         self.tx = open(tx_fd, 'wb', buffering=0)  # Unbuffered
         self.rx = open(rx_fd, 'rb')

@@ -3,13 +3,18 @@
 // SPDX-License-Identifier: SHL-0.51
 
 #include <stdio.h>
-
+#include <cstring>  // for myrtleTimeout
+#include <string>   // for myrtleTimeout
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
 #include "Vtestharness.h"
 #include "Vtestharness__Dpi.h"
 #include "sim.hh"
 #include "tb_lib.hh"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
+#include "Vtestharness_snitch_cc__pi13.h" // for cycle count?
 
 std::unique_ptr<sim::Sim> s;
 
@@ -28,11 +33,19 @@ void sim_thread_main(void *arg) { ((Sim *)arg)->main(); }
 vluint64_t TIME = 0;
 
 Sim::Sim(int argc, char **argv) : htif_t(argc, argv), ipc(argc, argv) {
+//Sim::Sim(int argc, char **argv) : htif_t(argc, argv){
     // Search arguments for `--vcd` flag and enable waves if requested
     for (auto i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--vcd") == 0) {
             printf("VCD wave generation enabled\n");
             vlt_vcd = true;
+        }
+        if (strncmp(argv[i], "--myrtleTimeout=",15) == 0) {
+            std::string arg = std::string(argv[i]);
+            int argLen = strlen(arg.c_str());
+            int keyLen = strlen("--myrtleTimeout=");
+            std::string sub = arg.substr(keyLen,argLen-1);
+            myrtleTimeout = std::stoi(sub.c_str());
         }
     }
     Verilated::commandArgs(argc, argv);
@@ -61,13 +74,20 @@ void Sim::main() {
         vcd->dump(TIME);
     }
     TIME += 2;
-
-    while (!Verilated::gotFinish()) {
+    int reg = 0;
+    while (!Verilated::gotFinish()) {     
         // Evaluate the DUT.
         top->eval();
         if (vlt_vcd) vcd->dump(TIME);
         // Increase global time.
         TIME++;
+        // check for timeout
+        Vtestharness_snitch_cc__pi13* const dmaCore =top->__PVT__testharness__DOT__i_snitch_cluster__DOT__i_cluster__DOT__gen_core__BRA__7__KET____DOT__i_snitch_cc;
+        auto cycle_q = dmaCore -> __PVT__i_snitch__DOT__cycle_q;
+        if((myrtleTimeout > 0) && (cycle_q > myrtleTimeout)){
+            if (vlt_vcd) vcd->close();
+            throw std::runtime_error("Myrtle Experiment Timeout at "+std::to_string(cycle_q)+" cycles");
+        }   
         // Switch to the HTIF interface in regular intervals.
         if (TIME % HTIFTimeInterval == 0) {
             host->switch_to();
@@ -119,3 +139,37 @@ void clint_tick(const svOpenArrayHandle msip) {
 }
 
 uint32_t get_bin_entry() { return s->get_bin_entry(); }
+
+
+// notes
+
+//     while (!Verilated::gotFinish()) {
+//         if (vlt_vcd) vcd->close();
+//         // Evaluate the DUT.
+//         top->eval();
+//         if (vlt_vcd) vcd->dump(TIME);
+//         // Increase global time.
+//         TIME++;
+//         // Switch to the HTIF interface in regular intervals.
+//         if (TIME % HTIFTimeInterval == 0) {
+//             host->switch_to();
+//         }
+//         // if(TIME > 5 && !alerted){
+//         //     const std::string filename="pastThreshold" + std::to_string(myrtleTimeout)+".txt";
+
+//         //       std::ofstream MyFile(filename);
+
+//         //         // Write to the file
+//         //         MyFile << "Alert: Cycle count is larger than 5\n";
+
+//         //         // Close the file
+//         //         MyFile.close();
+//         //     alerted = 1;
+//         //     break;
+//         // }
+//     }
+
+
+// throw std::runtime_error(
+//         "could not open " + payload +
+//         " (did you misspell it? If VCS, did you forget +permissive/+permissive-off?)");

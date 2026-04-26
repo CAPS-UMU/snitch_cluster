@@ -24,7 +24,7 @@ defaultSettings={
     "k": 16,
     "alpha": 1,
     "beta": 0,
-    "gemm_fp": "gemm_fp64_opt"
+    "gemm_fp": "gemm_fp64_opt_myrtle"
 }
 
 def main():

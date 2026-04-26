@@ -9,11 +9,29 @@ import numpy as np
 import sys
 from datagen import GemmDataGen
 
-from snitch.util.sim.verif_utils import Verifier
+import importlib.util
+import sys
+# we want to use a customized argument parser for the Verifier, so we aren't importing from venv.
+
+import pathlib
+spec = importlib.util.spec_from_file_location("SnitchSim.verif_utils", f"{pathlib.Path(__file__).parent.resolve()}/../../../../../util/sim/verif_utils.py")
+verif_utils = importlib.util.module_from_spec(spec)
+sys.modules["SnitchSim.verif_utils"] = verif_utils
+spec.loader.exec_module(verif_utils)
+#verif_utils.MyClass()
+#/home/hoppip/recent_snitch/snitch_cluster/sw/kernels/blas/matmul_padded/scripts/verify.py
+#../../../../../../util/sim/verif_utils.py
+# spec = importlib.util.spec_from_file_location("SnitchSim.verif_utils", "/path/to/file.py")
+# customVerifier = importlib.util.module_from_spec(spec)
+# sys.modules["SnitchSim.verif_utils"] = foo
+# spec.loader.exec_module(foo)
+# foo.MyClass()
+
+# from SnitchSim.verif_utils import Verifier
 from snitch.util.sim.data_utils import ctype_from_precision_t
 
 
-class GemmVerifier(Verifier):
+class GemmVerifier(verif_utils.Verifier):
 
     OUTPUT_UIDS = ['c']
     ERR_THRESHOLD = {

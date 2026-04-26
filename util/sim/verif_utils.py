@@ -14,8 +14,14 @@ from pathlib import Path
 
 from snitch.util.sim.Elf import Elf
 from snitch.util.sim.data_utils import flatten, from_buffer
-from snitch.util.sim import SnitchSim
-
+# from snitch.util.sim import SnitchSim
+import sys
+import importlib.util
+import pathlib
+spec = importlib.util.spec_from_file_location("SnitchSim.SnitchSim", f"{pathlib.Path(__file__).parent.resolve()}/SnitchSim.py")
+snitch_sim = importlib.util.module_from_spec(spec)
+sys.modules["SnitchSim.SnitchSim"] = snitch_sim
+spec.loader.exec_module(snitch_sim)
 
 def dump_results_to_csv(expected_results, actual_results, error, max_error, path):
     """Dumps results and errors to a CSV file.
@@ -137,6 +143,9 @@ class Verifier:
             type=lambda x: int(x, 0),
             help='The start address of the memory dumped to the file specified by --memdump,'
                  ' (e.g. 0x80000000 or 2147483648)')
+        parser.add_argument(
+            '--myrtleTimeout',
+            help='Maximum number of cycles to run the simulation (integer)')
         return parser
 
     def parse_args(self):
@@ -198,21 +207,22 @@ class Verifier:
         """
         # Open ELF file for processing
         elf = Elf(self.args.snitch_bin)
+        print(f"[Verifier] Myrtle Timeout Value is {self.args.myrtleTimeout}")
 
         # Start simulation
-        sim = SnitchSim(self.args.sim_bin, self.args.snitch_bin, simulator=self.args.simulator,
-                        log=self.args.log)
+        sim = snitch_sim.SnitchSim(self.args.sim_bin, self.args.snitch_bin, simulator=self.args.simulator,
+                        log=self.args.log,myrtleTimeout = f"--myrtleTimeout={self.args.myrtleTimeout}")
         sim.start()
 
         # Wait for kernel execution to be over
         tohost = elf.get_symbol_address('tohost')
         sim.poll(tohost, 1, 0)
 
+
         # Read out results from memory
         output_locs = self.get_output_memory_locations()
         self.raw_outputs = {uid: sim.read(loc['address'], loc['size'])
                             for uid, loc in output_locs.items()}
-
         # Terminate
         sim.finish(wait_for_sim=True)
 
@@ -333,7 +343,6 @@ class Verifier:
                                     for uid, loc in output_locs.items()}
             else:
                 raise ValueError('--memdump and --memaddr are required when --no-ipc is supplied')
-
         # Get actual and expected results
         actual_results = self.get_actual_results()
         expected_results = self.get_expected_results()
