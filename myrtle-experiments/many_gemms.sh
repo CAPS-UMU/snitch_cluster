@@ -127,8 +127,8 @@ check(){
                                 res=$(echo $?)
                                 errs2=$(cat "$buildDir/output.txt" | grep "did not produce expected result!")
                                 res2=$(echo $?)
-                                # errs3=$(cat "$buildDir/output.txt" | grep "ValueError")
-                                # res3=$(echo $?)
+                                errs3=$(cat "$buildDir/output.txt" | grep "Myrtle Experiment Timeout")
+                                res3=$(echo $?)
                                 if [[ "$res2" == "0" ]];
                                 then
                                     echo -e "\t\t$errs2"
@@ -138,10 +138,12 @@ check(){
                                     
                                     echo -e "\t\t\t Errors found in output.txt"
                                 fi
-                                # if [[ "$res3" == "0" ]];
-                                # then
-                                #     echo -e "\t\t\t$errs3"
-                                # fi
+                                if [[ "$res3" == "0" ]];
+                                then
+                                    echo -e "\t\t\t Timeout. Deleting log files..."
+                                    rm -rf "$buildDir/logs"
+                                    rm -rf "$buildDir/dma_trace_00008_00000.log"
+                                fi
                             else
                                 echo -e "\t\toutput.txt does not exist."
                             fi
