@@ -1,21 +1,37 @@
 # Extending Tiled Matmul with Remainder Tiles
-## Daily Commands
+## APPTAINER
+### Do this once
+From *inside* the `snitch_cluster` directory:
+```
+docker build --target snitch_cluster-hw -t ghcr.io/pulp-platform/snitch_cluster-hw:main -f util/container/Dockerfile .
+
+apptainer build util/container/snitch_cluster-hw.sif docker-daemon://ghcr.io/pulp-platform/snitch_cluster-hw:main
+
+apptainer build --sandbox util/container/snitch_cluster-hw-sandbox util/container/snitch_cluster-hw.sif
+
+apptainer shell --bind .:/repo util/container/snitch_cluster-hw-sandbox
+
+cd /repo
+
+bender update
+```
+### Daily Commands
+```
+apptainer shell --bind .:/repo util/container/snitch_cluster-hw-sandbox
+
+cd /repo
+```
+## Daily Commands DOCKER
 
 Make sure you are *outside* the `snitch_cluster` directory!
 
 ```
-docker run -it --entrypoint /bin/bash -v $PWD/snitch_cluster:/repo -w /repo ghcr.io/pulp-platform/snitch_cluster-sw:main
+docker run -it --entrypoint /bin/bash -v $PWD/snitch_cluster:/repo -w /repo ghcr.io/pulp-platform/snitch_cluster-hw:main
 ```
 
 Make sure to check your env vars are set before running any scripts!
 
-For divisor tiles:
-
-```
-export gemmDir="/repo/sw/kernels/blas/gemm"
-```
-
-For remainder tiles:
+For remainder and divisor tiles:
 
 ```
 export gemmDir="/repo/sw/kernels/blas/matmul_padded"
