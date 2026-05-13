@@ -4,7 +4,7 @@
 Make sure you are *outside* the `snitch_cluster` directory!
 
 ```
-docker run -it --entrypoint /bin/bash -v $PWD/snitch_cluster:/repo -w /repo ghcr.io/pulp-platform/snitch_cluster-sw:main
+docker run -it --entrypoint /bin/bash -v $PWD/snitch_cluster:/repo -w /repo ghcr.io/pulp-platform/snitch_cluster-hw:main
 ```
 
 Make sure to check your env vars are set before running any scripts!

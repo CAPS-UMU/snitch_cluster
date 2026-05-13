@@ -8,6 +8,17 @@ print("\n\t\tcombineTilingSchemeDataIntoSingleCSV.py: ATTN: only many_gemms.sh s
 # python combineKernelTimesIntoSingleCSV.py "256x256x256wm-n-k_searchSpace_c_analyzed-myrtle-sflt-ranking-top5.csv"
 # python combineKernelTimesIntoSingleCSV.py "256x256x256wm-n-k_searchSpace_c_analyzed.csv"
 
+def checkForTimeout(r):
+    output = f"{os.path.dirname(os.path.dirname(r))}/output.txt"
+    timeoutMsg="what():  Myrtle Experiment Timeout"
+    if os.path.exists(output):
+        with open(output, 'r', encoding='utf-8') as file:
+            str = file.read()
+            return timeoutMsg in str
+    else:
+        return False
+
+
 def main():
     if len(sys.argv) !=3:
         print("\t",end='')
@@ -28,15 +39,21 @@ def main():
         cols = list(orig.columns)
         for r in rest:
             if not os.path.exists(r):
-                print("\t\t",end='')
-                print(f"Skipping {r}")
+                if checkForTimeout(r):
+                    name = os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(r))))
+                    print("\t\t",end='')
+                    print(f"{name}: Detected Timeout")
+                    my_row = dict(zip(cols, [-1] * len(cols)))
+                    my_row["FakeNN JSON Name"] = name
+                    timeoutdf=pd.DataFrame([my_row],columns=my_row.keys())
+                    orig=pd.concat([orig,timeoutdf])
+                else:
+                    print("\t\t",end='')
+                    print(f"Skipping {r}")
             else:
                 rdf = pd.read_csv(r,index_col=False)
                 rdf = rdf[cols]
-                #orig = orig.merge(rdf,how='outer')
                 orig=pd.concat([orig,rdf])
-                # print(rdf)
-                # print(rdf.iloc[0])
         # file name for combined data is the original csv name with "results" appended to the end
         outputFile = f'{f[:-4]}-results.csv'
         df = df[["FakeNN JSON Name"]] # only take the unique id from the search space

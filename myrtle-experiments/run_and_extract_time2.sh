@@ -67,6 +67,9 @@ timeout(){
             kill -9 $PID_A 2>/dev/null
             EXIT_STATUS=1
             echo "simulation failed on timeout."> verify-output.txt
+            ls -l -h logs/*.dasm
+            rm -rf "logs"
+            rm -rf "dma_trace_00008_00000.log"
             break
         fi
 
@@ -108,9 +111,12 @@ main(){
     if [[ "$correct" != "0" ]]; 
     then
         echo -e "\trun_and_extract_time.sh: Simulation failed, so skipping export step. $correct"
+        rm -rf "dma_trace_00008_00000.log"
         # delete huge log files
         cd $logs
+        ls -l -h *.dasm
         rm -rf *.dasm
+        rm -rf *.txt
         return 1
     fi
 
@@ -131,7 +137,11 @@ main(){
         echo -e "\trun_and_extract_time.sh: Successfully exported timing information. Deleting logs..."
         # delete huge log files
         cd $logs
+        ls -l -h *.dasm
         rm -rf *.dasm
+        rm -rf *.txt
+        cd ..
+        rm -rf "dma_trace_00008_00000.log"
     else
         echo -e "\trun_and_extract_time.sh: Error exporting timing info!"
     fi
