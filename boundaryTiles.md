@@ -1,4 +1,4 @@
-# Extending Matmul with padding
+# Extending Matmul with Boundary Tiles
 ## Daily Commands
 
 Make sure you are *outside* the `snitch_cluster` directory!
@@ -13,7 +13,7 @@ Make sure to check your env vars are set before running any scripts!
 export gemmDir="/repo/sw/kernels/blas/gemm"
 ```
 
-For padding:
+For boundary tiles:
 
 ```
 export gemmDir="/repo/sw/kernels/blas/matmul_padded"

@@ -1,0 +1,77 @@
+	many_gemms.sh: This script compiles, runs, and exports timing info
+	               for many gemm kernels run on the snitch cluster.
+	many_gemms.sh: Always run this script from inside the myrtle-experiments
+	               directory (/repo/myrtle-experiments/ inside the docker image)
+	many_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpace.csv>'
+	many_gemms.sh: Sat Jun 13 15:30:27 UTC 2026
+	               Remember to set your environment variables correctly...
+	               gemmDir is /repo/sw/kernels/blas/matmul_padded
+	               experimentDir is /repo/16x16x16
+	               TIMEOUT is 
+	               beta is 1
+	many_gemms.sh: COMPILE step
+		16 16 16 16 16 16 with build directory /repo/16x16x16/16x16x16w16-16-16
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: beta is 1
+	prepareParams.py: we are working with /repo/sw/kernels/blas/matmul_padded/data/params.json 16x16x16 with num tiles 1 1 1
+/repo/sw/kernels/blas/matmul_padded/scripts/datagen.py -c /repo/sw/kernels/blas/matmul_padded/data/params.json --section="" /repo/sw/kernels/blas/matmul_padded/build/data.h
+a_size = 2048.0 = 16.0 x 16.0 x 8
+b_size = 2048.0 = 16.0 x 16.0 x 8
+c_size = 2048.0 = 16.0 x 16.0 x 8
+Total heap space required 6.0 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/matmul_padded/build/ -I/repo/sw/kernels/blas/matmul_padded/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/matmul_padded/src/main.c -o /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf > /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.dump
+		16 16 16 15 16 16 with build directory /repo/16x16x16/16x16x16w15-16-16
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: gemmDir env var /repo/sw/kernels/blas/matmul_padded contains the word padded, so we are setting params for boundary tiles.
+	prepareParams.py: beta is 1
+	prepareParams.py: we are working with /repo/sw/kernels/blas/matmul_padded/data/params.json 16x16x16 with num tiles 2 1 1
+/repo/sw/kernels/blas/matmul_padded/scripts/datagen.py -c /repo/sw/kernels/blas/matmul_padded/data/params.json --section="" /repo/sw/kernels/blas/matmul_padded/build/data.h
+a_size = 1920.0 = 15.0 x 16.0 x 8
+b_size = 2048.0 = 16.0 x 16.0 x 8
+c_size = 1920.0 = 15.0 x 16.0 x 8
+Total heap space required 5.8 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/matmul_padded/build/ -I/repo/sw/kernels/blas/matmul_padded/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/matmul_padded/src/main.c -o /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf > /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.dump
+		16 16 16 15 8 16 with build directory /repo/16x16x16/16x16x16w15-8-16
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: gemmDir env var /repo/sw/kernels/blas/matmul_padded contains the word padded, so we are setting params for boundary tiles.
+	prepareParams.py: beta is 1
+	prepareParams.py: we are working with /repo/sw/kernels/blas/matmul_padded/data/params.json 16x16x16 with num tiles 2 2 1
+/repo/sw/kernels/blas/matmul_padded/scripts/datagen.py -c /repo/sw/kernels/blas/matmul_padded/data/params.json --section="" /repo/sw/kernels/blas/matmul_padded/build/data.h
+a_size = 1920.0 = 15.0 x 16.0 x 8
+b_size = 1024.0 = 16.0 x 8.0 x 8
+c_size = 960.0 = 15.0 x 8.0 x 8
+Total heap space required 3.8 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/matmul_padded/build/ -I/repo/sw/kernels/blas/matmul_padded/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/matmul_padded/src/main.c -o /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf > /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.dump
+		16 16 16 9 8 16 with build directory /repo/16x16x16/16x16x16w9-8-16
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: gemmDir env var /repo/sw/kernels/blas/matmul_padded contains the word padded, so we are setting params for boundary tiles.
+	prepareParams.py: beta is 1
+	prepareParams.py: we are working with /repo/sw/kernels/blas/matmul_padded/data/params.json 16x16x16 with num tiles 2 2 1
+/repo/sw/kernels/blas/matmul_padded/scripts/datagen.py -c /repo/sw/kernels/blas/matmul_padded/data/params.json --section="" /repo/sw/kernels/blas/matmul_padded/build/data.h
+a_size = 1152.0 = 9.0 x 16.0 x 8
+b_size = 1024.0 = 16.0 x 8.0 x 8
+c_size = 576.0 = 9.0 x 8.0 x 8
+Total heap space required 2.7 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/matmul_padded/build/ -I/repo/sw/kernels/blas/matmul_padded/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/matmul_padded/src/main.c -o /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf > /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.dump
+		16 16 16 9 8 9 with build directory /repo/16x16x16/16x16x16w9-8-9
+
+	prepareParams.py: ATTN: only many_gemms.sh should call this script.
+	prepareParams.py: gemmDir env var /repo/sw/kernels/blas/matmul_padded contains the word padded, so we are setting params for boundary tiles.
+	prepareParams.py: beta is 1
+	prepareParams.py: we are working with /repo/sw/kernels/blas/matmul_padded/data/params.json 16x16x16 with num tiles 2 2 2
+/repo/sw/kernels/blas/matmul_padded/scripts/datagen.py -c /repo/sw/kernels/blas/matmul_padded/data/params.json --section="" /repo/sw/kernels/blas/matmul_padded/build/data.h
+a_size = 648.0 = 9.0 x 9.0 x 8
+b_size = 576.0 = 9.0 x 8.0 x 8
+c_size = 576.0 = 9.0 x 8.0 x 8
+Total heap space required 1.8 KiB
+/tools/riscv-llvm/bin/clang++ -mcpu=snitch -menable-experimental-extensions -mabi=ilp32d -mcmodel=medany -mno-fdiv -fno-builtin-printf -fno-builtin-sqrtf -fno-common -fopenmp -ftls-model=local-exec -O3 -Werror -g -I/repo/sw/kernels/blas -I/repo/sw/kernels/blas/matmul_padded/build/ -I/repo/sw/kernels/blas/matmul_padded/src -I/repo/sw/runtime/src -I/repo/sw/runtime/api -I/repo/sw/runtime/src/omp -I/repo/sw/runtime/api/omp -I/repo/sw/runtime/vendor/riscv-opcodes -I/repo/sw/runtime/impl -I/repo/sw/deps/riscv-opcodes -fuse-ld=/tools/riscv-llvm/bin/ld.lld -nostartfiles -nostdlib++ -lm -L/repo/sw/runtime/impl/ -T/repo/sw/runtime/base.ld -L/repo/sw/runtime/build/ -lsnRuntime -x c++ /repo/sw/kernels/blas/matmul_padded/src/main.c -o /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf
+/tools/riscv-llvm/bin/llvm-objdump --mcpu=snitch -D /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.elf > /repo/sw/kernels/blas/matmul_padded/build/matmul_padded.dump
+	many_gemms.sh: DONE

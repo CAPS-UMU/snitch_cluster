@@ -49,7 +49,16 @@ def main():
                 raise Exception(f'prepareParams.py: Error: one of the tile sizes {m}, {n}, or {k} does not divide evenly into input size {M}x{N}x{K}')
             else:
                 print("\t",end='')
-                print(f"prepareParams.py: gemmDir env var {padding} contains the word padded, so we are setting params for padding.")
+                print(f"prepareParams.py: gemmDir env var {padding} contains the word padded, so we are setting params for boundary tiles.")
+        beta = os.getenv('beta', "-42")
+        if(beta=="-42"):
+            print("\t",end='')
+            print("prepareParams.py: Warning: beta env not set. defaulting beta to 0.")
+            beta = 0
+        else:
+            beta = int(beta)
+            print("\t",end='')
+            print(f"prepareParams.py: beta is {beta}")
         m_tiles=int(paddedM/m)
         n_tiles=int(paddedN/n)
         k_tiles=int(paddedK/k)
@@ -65,6 +74,7 @@ def main():
         data["m_unpadded"]=M 
         data["n_unpadded"]=N 
         data["k_unpadded"]=K
+        data["beta"]=beta
         f = open(fp, "w")   # 'r' for reading and 'w' for writing 
         f.write(f"{json.dumps(data)}")
         f.close()  
