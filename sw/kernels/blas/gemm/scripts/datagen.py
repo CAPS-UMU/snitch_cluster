@@ -68,7 +68,7 @@ class GemmDataGen(du.DataGen):
         print(f'b_size = {b_size} = {tile_k} x {tile_n} x {prec}')
         print(f'c_size = {c_size} = {tile_m} x {tile_n} x {prec}')
         du.validate_tcdm_footprint(total_size)
-        
+        print(f"dtype is {dtype}")
         # extra constraint for special strided bank layout
         # new layout requires checking that individual matrices fit in 8banks
         BANK_SIZE = 1 * 1024  # 2KiB

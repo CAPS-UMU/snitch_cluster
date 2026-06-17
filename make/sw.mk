@@ -74,8 +74,7 @@ SN_BUILD_APPS ?= ON
 ifeq ($(SN_BUILD_APPS), ON)
 SN_APPS += $(SN_ROOT)/sw/kernels/blas/axpy
 SN_APPS += $(SN_ROOT)/sw/kernels/blas/gemm
-SN_APPS += $(SN_ROOT)/sw/kernels/blas/gemm-padded
-SN_APPS += $(SN_ROOT)/sw/kernels/blas/matmul_padded
+SN_APPS += $(SN_ROOT)/sw/kernels/blas/gemm_boundary
 SN_APPS += $(SN_ROOT)/sw/kernels/blas/gemv
 SN_APPS += $(SN_ROOT)/sw/kernels/blas/dot
 SN_APPS += $(SN_ROOT)/sw/kernels/blas/syrk

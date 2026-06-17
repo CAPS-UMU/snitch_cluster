@@ -420,7 +420,7 @@ inline snrt_dma_txid_t snrt_dma_load_2d_tile(
  * 
  * @param tile_x1_prev_size Number of elements in the outermost dimension of the preceding
  *                     tile.
- * @param tile_x0__prev_size Number of elements in the innermost dimension of the preceding
+ * @param tile_x0_prev_size Number of elements in the innermost dimension of the preceding
  *                     tile.
  * 
  * When the 2D tile to copy is a remainder tile, 
@@ -485,6 +485,61 @@ inline snrt_dma_txid_t snrt_dma_load_2d_tile(
                                  tile_x1_size, tile_x0_size, full_x0_size, prec,
                                  tile_x0_size * prec);
 }
+
+/**
+ * @brief Transfer and Rehape a 1D tile as a 2D array, accounting for boundary tiles.
+ * 
+ * @param tile_x1_prev_size Number of elements in the outermost dimension of the preceding
+ *                     tile.
+ * @param tile_x0_prev_size Number of elements in the innermost dimension of the preceding
+ *                     tile.
+ * 
+ * When the 2D tile to copy is a remainder tile, 
+ * tile_x1_prev_size > tile_x1_size and/or tile_x0_prev_size > tile_x0_size.
+ *
+ * @see snrt_dma_load_2d_tile(void *, void *, size_t, size_t, size_t, size_t, size_t, uint32_t, size_t)
+ *      for a detailed description of the parameters.
+ */
+inline snrt_dma_txid_t snrt_dma_load_1d_to_2d_boundary_tile(
+    void *dst, void *src, size_t tile_x1_idx, size_t tile_x0_idx,
+    size_t tile_x1_prev_size, size_t tile_x0_prev_size,
+    size_t tile_x1_size, size_t tile_x0_size, size_t full_x0_size,
+    uint32_t prec, size_t tile_ld) {
+    size_t src_offset = 0;
+    // Advance src array in x0 and x1 dimensions, and convert to byte offset
+    // Use the size of preceding tiles to calculate offset
+    src_offset += tile_x0_idx * tile_x0_prev_size;
+    src_offset += tile_x1_idx * tile_x1_prev_size * full_x0_size;
+    src_offset *= prec;
+    // Use size of current tile to calculate the repeat value (# of 1D transfers)
+    size_t repeat = tile_x1_size;
+    // Initiate transfer
+    return snrt_dma_start_2d((uint64_t)dst,               // dst
+                             (uint64_t)src + src_offset,  // src
+                             tile_x0_size * prec,         // size
+                             tile_ld,                     // dst_stride
+                             full_x0_size * prec,         // src_stride
+                             repeat                 // repeat
+    );
+}
+
+/**
+ * @brief Transfer and Rehape a 1D tile as a 2D array, accounting for boundary tiles.
+ *
+ * @see snrt_dma_load_2d_remainder_tile(void *, void *, size_t, size_t, size_t, size_t, size_t, uint32_t, size_t)
+ *      for a detailed description of the parameters.
+ */
+inline snrt_dma_txid_t snrt_dma_load_1d_to_2d_boundary_tile(
+    void *dst, void *src, size_t tile_x1_idx, size_t tile_x0_idx,size_t tile_x1_prev_size, size_t tile_x0_prev_size,
+    size_t tile_x1_size, size_t tile_x0_size, size_t full_x0_size,
+    uint32_t prec) {
+        // use current tile's row width for the tile stride
+    return snrt_dma_load_1d_to_2d_boundary_tile(dst, src, tile_x1_idx, tile_x0_idx,tile_x1_prev_size,tile_x0_prev_size,
+                                 tile_x1_size, tile_x0_size, full_x0_size, prec,
+                                 tile_x0_size * prec);
+}
+
+
 
 /**
  * @brief Load a 2D tile of a 2D array using multicast.

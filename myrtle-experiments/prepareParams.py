@@ -39,17 +39,18 @@ def main():
         m=int(sys.argv[5])
         n=int(sys.argv[6])
         k=int(sys.argv[7])
-        padding = sys.argv[8]
+        boundary = sys.argv[8]
        # print(f"my vals are {M} {N} {K} {m} {n} {k} ")
         paddedM = m * (M // m) + m if (M % m) != 0 else M
         paddedN = n * (N // n) + n if (N % n) != 0 else N
         paddedK = k * (K // k) + k if (K % k) != 0 else K
         if (M % m != 0.0) or (N % n != 0.0) or (K % k != 0.0):
-            if "padded" not in f'{padding}':
+            if "boundary" not in f'{boundary}':
                 raise Exception(f'prepareParams.py: Error: one of the tile sizes {m}, {n}, or {k} does not divide evenly into input size {M}x{N}x{K}')
             else:
                 print("\t",end='')
-                print(f"prepareParams.py: gemmDir env var {padding} contains the word padded, so we are setting params for boundary tiles.")
+                print(f"prepareParams.py: gemmDir env var {boundary} contains the word boundary, so we are setting params for boundary tiles.")
+        # choose beta value based on env var
         beta = os.getenv('beta', "-42")
         if(beta=="-42"):
             print("\t",end='')
@@ -59,6 +60,16 @@ def main():
             beta = int(beta)
             print("\t",end='')
             print(f"prepareParams.py: beta is {beta}")
+        # choose spm layout based on env var
+        spm_opt = os.getenv('spm_opt', "-42")
+        if(spm_opt=="-42"):
+            print("\t",end='')
+            print("prepareParams.py: Warning: spm_opt env not set. defaulting spm_opt to 0.")
+            spm_opt = 0
+        else:
+            spm_opt = int(spm_opt)
+            print("\t",end='')
+            print(f"prepareParams.py: spm_opt is {spm_opt}")
         m_tiles=int(paddedM/m)
         n_tiles=int(paddedN/n)
         k_tiles=int(paddedK/k)
@@ -75,6 +86,7 @@ def main():
         data["n_unpadded"]=N 
         data["k_unpadded"]=K
         data["beta"]=beta
+        data["partition_banks"] = spm_opt
         f = open(fp, "w")   # 'r' for reading and 'w' for writing 
         f.write(f"{json.dumps(data)}")
         f.close()  
