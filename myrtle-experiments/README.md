@@ -17,11 +17,23 @@ bender update
 ```
 ### Daily Commands
 ```
+export PATH=$PATH:/home/esillars/apptainer-build/bin
+
+cd snitch_cluster
+
 apptainer shell --bind .:/repo util/container/snitch_cluster-hw-sandbox
 
 cd /repo
+
+export gemmDir="/repo/sw/kernels/blas/matmul_padded"
 ```
-## Daily Commands DOCKER
+## DOCKER
+from inside snitch_cluster directory,
+```
+sudo docker build --target snitch_cluster-hw -t ghcr.io/pulp-platform/snitch_cluster-hw:main -f util/container/Dockerfile .
+```
+
+### Daily Commands
 
 Make sure you are *outside* the `snitch_cluster` directory!
 

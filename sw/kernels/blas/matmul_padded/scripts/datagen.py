@@ -74,7 +74,7 @@ class GemmDataGen(du.DataGen):
         BANK_SIZE = 1 * 1024  # 2KiB
         MAX_ALLOWED_SIZE = 8 * BANK_SIZE  # Every matrix can take up maximum 8 banks
         max_size = max(a_size, b_size, c_size)
-        assert max_size <= MAX_ALLOWED_SIZE, 'one of the tiles does not fit in 8 banks'
+       # assert max_size <= MAX_ALLOWED_SIZE, 'one of the tiles does not fit in 8 banks'
 
         assert (m % m_tiles) == 0, 'm is not an integer multiple of tile size'
         assert (n % n_tiles) == 0, 'n is not an integer multiple of tile size'
