@@ -29,3 +29,6 @@ deleteLater/
 /tools/
 /build/
 /snitch.egg-info/
+
+#claude
+.claude
