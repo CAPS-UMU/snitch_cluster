@@ -90,7 +90,21 @@ void* IpcIface::ipc_thread_handle(void* in) {
 IpcIface::IpcIface(int argc, char** argv) {
     static constexpr char IPC_FLAG[6] = "--ipc";
     active = false;
+    // check for myrtle timeout flag
+    std::string containsMyrtleArg = std::string("");
+    int index = -1;
     for (auto i = 1; i < argc; ++i) {
+        // save index of timeout arg if it exists
+        std::string str = std::string(argv[i]);
+        int pos = str.find("--myrtleTimeout=");
+        if(pos != -1){
+            index = i;
+            containsMyrtleArg = std::string(argv[i]);
+            int argLen = strlen(str.c_str());
+            int keyLen = strlen("--myrtleTimeout=");
+            std::string sub = str.substr(pos,argLen-1);
+            containsMyrtleArg = sub;
+        }
         if (strncmp(argv[i], IPC_FLAG, strlen(IPC_FLAG)) == 0) {
             // Check for duplicate args
             if (active) {
@@ -111,6 +125,11 @@ IpcIface::IpcIface(int argc, char** argv) {
             printf("[IPC] Thread launched with TX FIFO `%s`, RX FIFO `%s`\n",
                    targs.tx, targs.rx);
             active = true;
+        }
+        if (index != -1) {
+        // copy myrtle timeout argument back into argv,
+        // because null characters inserted by strtok render it invisible
+        strcpy(argv[index],containsMyrtleArg.c_str());
         }
     }
 }

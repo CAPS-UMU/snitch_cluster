@@ -50,6 +50,7 @@ struct Sim : htif_t {
     context_t target;
     bool vlt_vcd = false;
     bool disable_preloading = false;
+    uint32_t myrtleTimeout = 0;
     IpcIface ipc;
 };
 

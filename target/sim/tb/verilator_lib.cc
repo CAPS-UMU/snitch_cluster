@@ -3,13 +3,18 @@
 // SPDX-License-Identifier: SHL-0.51
 
 #include <stdio.h>
-
+#include <cstring>  // for myrtleTimeout
+#include <string>   // for myrtleTimeout
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
 #include "Vtestharness.h"
 #include "Vtestharness__Dpi.h"
 #include "sim.hh"
 #include "tb_lib.hh"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
+#include "Vtestharness_snitch_cc__pi14.h" // for cycle count
 
 std::unique_ptr<sim::Sim> s;
 
@@ -33,6 +38,13 @@ Sim::Sim(int argc, char **argv) : htif_t(argc, argv), ipc(argc, argv) {
         if (strcmp(argv[i], "--vcd") == 0) {
             printf("VCD wave generation enabled\n");
             vlt_vcd = true;
+        }
+        if (strncmp(argv[i], "--myrtleTimeout=",15) == 0) {
+            std::string arg = std::string(argv[i]);
+            int argLen = strlen(arg.c_str());
+            int keyLen = strlen("--myrtleTimeout=");
+            std::string sub = arg.substr(keyLen,argLen-1);
+            myrtleTimeout = std::stoi(sub.c_str());
         }
     }
     Verilated::commandArgs(argc, argv);
@@ -68,6 +80,13 @@ void Sim::main() {
         if (vlt_vcd) vcd->dump(TIME);
         // Increase global time.
         TIME++;
+        // check for myrtle timeout
+        Vtestharness_snitch_cc__pi14* const core7 =top->__PVT__testharness__DOT__i_snitch_cluster__DOT__i_cluster__DOT__gen_core__BRA__7__KET____DOT__i_snitch_cc;
+        auto cycle_q = core7 -> __PVT__i_snitch__DOT__cycle_q;
+        if((myrtleTimeout > 0) && (cycle_q > myrtleTimeout)){
+            if (vlt_vcd) vcd->close();
+            throw std::runtime_error("Myrtle Experiment Timeout at "+std::to_string(cycle_q)+" cycles");
+        }  
         // Switch to the HTIF interface in regular intervals.
         if (TIME % HTIFTimeInterval == 0) {
             host->switch_to();
