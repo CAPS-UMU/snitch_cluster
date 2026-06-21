@@ -27,11 +27,11 @@ elf=$(basename $gemmDir)
 
 
 
-# gemini helped me write the timeout functino for this script
+# gemini helped me write the timeout function for this script
 timeout(){
     # 1. Start process A (verify.py) in the background
  #   python3 verify.py > output.txt 2>&1 &
-    $gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf > verify-output.txt &
+    $gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf "--myrtleTimeout=$TIMEOUT" > verify-output.txt &
 #    correct=$($gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf --myrtleTimeout=5 > verify-output.txt; echo $?)
     
     PID_A=$!
