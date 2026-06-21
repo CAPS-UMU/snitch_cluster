@@ -20,5 +20,6 @@ static inline double multiply_opt(double multiplicand, double multiplier) {
 #include "axpy/src/axpy.h"
 #include "dot/src/dot.h"
 #include "gemm/src/gemm.h"
+#include "gemm_boundary/src/gemm_boundary.h"
 #include "gemv/src/gemv.h"
 #include "syrk/src/syrk.h"

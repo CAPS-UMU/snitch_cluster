@@ -1,0 +1,7 @@
+*/build/*
+*/params.json
+*results-skipper.csv
+*results-unskipped.csv
+*results.csv
+compile-16x16x16wm-n-k.txt
+run-16x16x16wm-n-k.txt
