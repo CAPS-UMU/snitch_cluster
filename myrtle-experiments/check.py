@@ -19,11 +19,11 @@ def main():
           fl = open(f"{txtFileDir}left.txt", "w")
           subprocess.call(['tail', f"{txtFileDir}both.txt", "-c",f'{len(file_content)//2}' ],stdout=fl)
           fl.close()
-          subprocess.call(['cat', f"{txtFileDir}left.txt" ])
+         # subprocess.call(['cat', f"{txtFileDir}left.txt" ])
           fr = open(f"{txtFileDir}right.txt", "w")
           subprocess.call(['tail', f"{txtFileDir}both.txt", "-c",f'{len(file_content)//2}' ],stdout=fr)
           fr.close()
-          subprocess.call(['cat', f"{txtFileDir}right.txt" ])
+         # subprocess.call(['cat', f"{txtFileDir}right.txt" ])
           return subprocess.call(['diff',  f"{txtFileDir}left.txt",f"{txtFileDir}right.txt" ])
      except ValueError:
           print("Possible Error Detected! Re-run this verification script.")
