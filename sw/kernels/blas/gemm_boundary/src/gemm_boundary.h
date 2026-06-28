@@ -10,8 +10,8 @@
 #include <stdalign.h>
 #include <stdint.h>
 
-#include "snrt.h"
 #include "gemm_fp64_myrtle.h"
+#include "snrt.h"
 
 #pragma once
 
@@ -42,19 +42,19 @@ extern int honeybee;
  * @note Current implementation assumes that `parallelize_m` and
  *       `parallelize_k` options are mutually exclusive.
  */
-static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
+static inline int gemm_boundary(const gemm_args_t* args, uint32_t m_unpad,
                                 uint32_t n_unpad, uint32_t k_unpad) {
 #ifndef JOB_ARGS_PRELOADED
     // Copy the arguments to local memory
-    gemm_args_t *largs = (gemm_args_t *)snrt_l1_alloc_cluster_local(
+    gemm_args_t* largs = (gemm_args_t*)snrt_l1_alloc_cluster_local(
         sizeof(gemm_args_t), alignof(gemm_args_t));
     if (snrt_is_dm_core()) {
-        snrt_dma_start_1d((void *)largs, (void *)args, sizeof(gemm_args_t));
+        snrt_dma_start_1d((void*)largs, (void*)args, sizeof(gemm_args_t));
         snrt_dma_wait_all();
     }
     snrt_cluster_hw_barrier();
 #else
-    const gemm_args_t *largs = args;
+    const gemm_args_t* largs = args;
 #endif
 
     // Calculate tile sizes
@@ -114,9 +114,8 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
     else
         num_iters += 1;
     // Iterate over all tiles
-    if(honeybee == 76){
+    if (honeybee == 76) {
         num_iters = num_iters;
-
     }
     for (uint32_t i = 0; i < num_iters; i++) {
         // Calculate tile indices (we iterate in k->n->m order)
@@ -150,7 +149,7 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
         int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
         int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
         int comp_tile_k = comp_k == k_rem_idx ? tile_k_rem : tile_k;
-        
+
         int mylda = args->lda;
         int myldb = args->ldb;
         int myldc = args->ldc;
@@ -181,14 +180,15 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                 int buff_idx = largs->double_buffer ? dma_out_mn % 2 : 0;
 
                 // Store C
-                if (dma_out_k == k_rem_idx) {  // only store C on last k iteration
+                if (dma_out_k ==
+                    k_rem_idx) {  // only store C on last k iteration
 
                     // If parallelize_k, then only cluster 0 must writeback
                     if ((snrt_cluster_idx() == 0) || !(largs->parallelize_k)) {
                         if (largs->partition_banks) {
                             snrt_dma_2d_to_1d(
-                                (void *)((uintptr_t)largs->c +
-                                         dma_out_m_abs * tile_c_size),
+                                (void*)((uintptr_t)largs->c +
+                                        dma_out_m_abs * tile_c_size),
                                 lc[buff_idx], tile_c_size,
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
@@ -217,13 +217,17 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                 // Load A
                 if (largs->load_a) {
                     if (largs->partition_banks) {
-                        snrt_dma_1d_to_2d(
-                            la[buff_idx],
-                            (void *)((uintptr_t)largs->a +
-                                     dma_in_m_abs * tile_a_size),
-                            tile_a_size,
-                            banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
-                            SNRT_TCDM_HYPERBANK_WIDTH);
+                        // snrt_dma_1d_to_2d(
+                        //     la[buff_idx],
+                        //     (void*)((uintptr_t)largs->a +
+                        //             dma_in_m_abs * tile_a_size),
+                        //     tile_a_size,
+                        //     banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
+                        //     SNRT_TCDM_HYPERBANK_WIDTH);
+                        snrt_dma_load_2d_opt_layout(
+                            la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
+                            tile_m, tile_k, dma_in_tile_m, dma_in_tile_k,
+                            largs->k_tiles, largs->prec, banks_per_buffer);
                     } else {  // this case we modified
                         //  snrt_dma_load_2d_tile(
                         //     la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
@@ -243,14 +247,17 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                                               largs->ldb, largs->prec);
                     } else {
                         if (largs->partition_banks) {
-                            
-                            snrt_dma_1d_to_2d(
-                                lb[buff_idx],
-                                (void *)((uintptr_t)largs->b +
-                                         dma_in_k_abs * tile_b_size),
-                                dma_in_tile_b_size,
-                                banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
-                                SNRT_TCDM_HYPERBANK_WIDTH);
+                            // snrt_dma_1d_to_2d(
+                            //     lb[buff_idx],
+                            //     (void*)((uintptr_t)largs->b +
+                            //             dma_in_k_abs * tile_b_size),
+                            //     dma_in_tile_b_size,
+                            //     banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
+                            //     SNRT_TCDM_HYPERBANK_WIDTH);
+                            snrt_dma_load_2d_opt_layout(
+                            lb[buff_idx], largs->b, dma_in_k, dma_in_n,
+                            tile_k, tile_n, dma_in_tile_k, dma_in_tile_n,
+                            largs->n_tiles, largs->prec, banks_per_buffer);
                         } else {  // this case we modified
                             // snrt_dma_load_2d_tile(
                             //     lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,
@@ -272,8 +279,8 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                         if (largs->partition_banks) {
                             snrt_dma_1d_to_2d(
                                 lc[c_buff_idx],
-                                (void *)((uintptr_t)largs->c +
-                                         dma_in_m_abs * tile_c_size),
+                                (void*)((uintptr_t)largs->c +
+                                        dma_in_m_abs * tile_c_size),
                                 tile_c_size,
                                 banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
                                 SNRT_TCDM_HYPERBANK_WIDTH);
@@ -342,8 +349,8 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                 } else if (largs->partition_banks) {
                     sc_st_args.lda = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_k, largs->prec);
-                } else {  // we modify this case
-                    sc_st_args.lda = comp_tile_k; // row width of A tile
+                } else {                           // we modify this case
+                    sc_st_args.lda = comp_tile_k;  // row width of A tile
                 }
                 sc_st_args.b = lb[buff_idx];
                 if (largs->transb) {
@@ -351,16 +358,16 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                 } else if (largs->partition_banks) {
                     sc_st_args.ldb = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_n, largs->prec);
-                } else {  // we modify this case
-                    sc_st_args.ldb = comp_tile_n; // row width of B tile
+                } else {                           // we modify this case
+                    sc_st_args.ldb = comp_tile_n;  // row width of B tile
                 }
                 sc_st_args.beta = beta_k;
                 sc_st_args.c = lc[c_buff_idx];
                 if (largs->partition_banks) {
                     sc_st_args.ldc = calculate_partitioned_banks_stride(
                         banks_per_buffer, tile_n, largs->prec);
-                } else {  // we modify this case
-                    sc_st_args.ldc = comp_tile_n; // row width of C tile
+                } else {                           // we modify this case
+                    sc_st_args.ldc = comp_tile_n;  // row width of C tile
                 }
                 sc_st_args.m = comp_tile_m;
                 sc_st_args.n = comp_tile_n;
@@ -377,17 +384,17 @@ static inline int gemm_boundary(const gemm_args_t *args, uint32_t m_unpad,
                 switch (largs->prec) {
                     case FP64:
                         snrt_global_reduction_dma<double>(
-                            (double *)lcr, (double *)lc[c_buff_idx],
+                            (double*)lcr, (double*)lc[c_buff_idx],
                             tile_m * tile_n, comm);
                         break;
                     case FP32:
-                        snrt_global_reduction_dma<float>(
-                            (float *)lcr, (float *)lc[c_buff_idx],
-                            tile_m * tile_n, comm);
+                        snrt_global_reduction_dma<float>((float*)lcr,
+                                                         (float*)lc[c_buff_idx],
+                                                         tile_m * tile_n, comm);
                         break;
                     case FP16:
                         snrt_global_reduction_dma<__fp16>(
-                            (__fp16 *)lcr, (__fp16 *)lc[c_buff_idx],
+                            (__fp16*)lcr, (__fp16*)lc[c_buff_idx],
                             tile_m * tile_n, comm);
                         break;
                 }
