@@ -140,12 +140,12 @@ static inline int gemm_boundary(const gemm_args_t* args, uint32_t m_unpad,
         int dma_in_tile_m = dma_in_m == m_rem_idx ? tile_m_rem : tile_m;
         int dma_in_tile_n = dma_in_n == n_rem_idx ? tile_n_rem : tile_n;
         int dma_in_tile_k = dma_in_k == k_rem_idx ? tile_k_rem : tile_k;
-        int dma_in_tile_b_size = dma_in_tile_k * dma_in_tile_n;
-        int dma_in_tile_a_size = dma_in_tile_m * dma_in_tile_k;
+        int dma_in_tile_b_size = dma_in_tile_k * dma_in_tile_n *largs->prec;
+        int dma_in_tile_a_size = dma_in_tile_m * dma_in_tile_k * largs->prec;
         int dma_out_tile_m = dma_out_m == m_rem_idx ? tile_m_rem : tile_m;
         int dma_out_tile_n = dma_out_n == n_rem_idx ? tile_n_rem : tile_n;
         int dma_out_tile_k = dma_out_k == k_rem_idx ? tile_k_rem : tile_k;
-        int dma_out_tile_c_size = dma_out_tile_m * dma_out_tile_n;
+        int dma_out_tile_c_size = dma_out_tile_m * dma_out_tile_n *largs->prec;
         int comp_tile_m = comp_m == m_rem_idx ? tile_m_rem : tile_m;
         int comp_tile_n = comp_n == n_rem_idx ? tile_n_rem : tile_n;
         int comp_tile_k = comp_k == k_rem_idx ? tile_k_rem : tile_k;
@@ -217,17 +217,17 @@ static inline int gemm_boundary(const gemm_args_t* args, uint32_t m_unpad,
                 // Load A
                 if (largs->load_a) {
                     if (largs->partition_banks) {
-                        // snrt_dma_1d_to_2d(
-                        //     la[buff_idx],
-                        //     (void*)((uintptr_t)largs->a +
-                        //             dma_in_m_abs * tile_a_size),
-                        //     tile_a_size,
-                        //     banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
-                        //     SNRT_TCDM_HYPERBANK_WIDTH);
-                        snrt_dma_load_2d_opt_layout(
-                            la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
-                            tile_m, tile_k, dma_in_tile_m, dma_in_tile_k,
-                            largs->k_tiles, largs->prec, banks_per_buffer);
+                        snrt_dma_1d_to_2d(
+                            la[buff_idx],
+                            (void*)((uintptr_t)largs->a +
+                                    dma_in_m_abs * tile_a_size),
+                            tile_a_size,
+                            banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
+                            SNRT_TCDM_HYPERBANK_WIDTH);
+                        // snrt_dma_load_2d_opt_layout(
+                        //     la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
+                        //     tile_m, tile_k, dma_in_tile_m, dma_in_tile_k,
+                        //     largs->k_tiles, largs->prec, banks_per_buffer);
                     } else {  // this case we modified
                         //  snrt_dma_load_2d_tile(
                         //     la[buff_idx], largs->a, dma_in_m_abs, dma_in_k_abs,
@@ -247,17 +247,17 @@ static inline int gemm_boundary(const gemm_args_t* args, uint32_t m_unpad,
                                               largs->ldb, largs->prec);
                     } else {
                         if (largs->partition_banks) {
-                            // snrt_dma_1d_to_2d(
-                            //     lb[buff_idx],
-                            //     (void*)((uintptr_t)largs->b +
-                            //             dma_in_k_abs * tile_b_size),
-                            //     dma_in_tile_b_size,
-                            //     banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
-                            //     SNRT_TCDM_HYPERBANK_WIDTH);
-                            snrt_dma_load_2d_opt_layout(
-                            lb[buff_idx], largs->b, dma_in_k, dma_in_n,
-                            tile_k, tile_n, dma_in_tile_k, dma_in_tile_n,
-                            largs->n_tiles, largs->prec, banks_per_buffer);
+                            snrt_dma_1d_to_2d(
+                                lb[buff_idx],
+                                (void*)((uintptr_t)largs->b +
+                                        dma_in_k_abs * tile_b_size),
+                                dma_in_tile_b_size,
+                                banks_per_buffer * SNRT_TCDM_BANK_WIDTH,
+                                SNRT_TCDM_HYPERBANK_WIDTH);
+                            // snrt_dma_load_2d_opt_layout(
+                            // lb[buff_idx], largs->b, dma_in_k, dma_in_n,
+                            // tile_k, tile_n, dma_in_tile_k, dma_in_tile_n,
+                            // largs->n_tiles, largs->prec, banks_per_buffer);
                         } else {  // this case we modified
                             // snrt_dma_load_2d_tile(
                             //     lb[buff_idx], largs->b, dma_in_k_abs, dma_in_n,

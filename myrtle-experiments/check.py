@@ -7,6 +7,8 @@ def main():
      txtFileDir=txtFile[:len(txtFile) - len("verify-output.txt")]
      with open(txtFile) as file:
           lines = [line.rstrip() for line in file]
+          if("Wrote results to " in lines[-1]):
+               raise Exception("Error: unexpected output")
      try:
           start=lines.index("[IPC] Thread joined")+1 # inclusive line index
           both = open(f"{txtFileDir}both.txt", "w")
@@ -24,11 +26,7 @@ def main():
           subprocess.call(['tail', f"{txtFileDir}both.txt", "-c",f'{len(file_content)//2}' ],stdout=fr)
           fr.close()
          # subprocess.call(['cat', f"{txtFileDir}right.txt" ])
-          result =  subprocess.call(['diff',  f"{txtFileDir}left.txt",f"{txtFileDir}right.txt" ])
-          if result == 0:
-               sys.exit(1)
-          else:
-               sys.exit(0)
+          return subprocess.call(['diff',  f"{txtFileDir}left.txt",f"{txtFileDir}right.txt" ])
      except ValueError:
           print("Possible Error Detected! Re-run this verification script.")
           raise Exception("Possible Error Detected! Re-run this verification script.")
