@@ -11,7 +11,7 @@
 import numpy as np
 import re
 import sys
-
+from customInputs import getABC 
 import snitch.util.sim.data_utils as du
 
 
@@ -139,6 +139,8 @@ class GemmDataGen(du.DataGen):
         a = du.generate_random_array((up_M, up_K), prec, seed=42)
         b = du.generate_random_array((up_K, up_N), prec, seed=42)
         c = du.generate_random_array((up_M, up_N), prec, seed=42)
+        
+        a,b,c= getABC(up_M,up_N,up_K)
 
         # for pad N function
         #up_N = 32

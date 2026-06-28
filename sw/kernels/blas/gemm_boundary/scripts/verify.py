@@ -72,11 +72,16 @@ class GemmVerifier(verif_utils.Verifier):
             b = np.reshape(b, (k, n))
         c = np.reshape(c, (m, n))
 
-        return GemmDataGen().exact_golden_model(1, a, b, beta, c).flatten()
+        return GemmDataGen().exact_golden_model(1, a, b, beta, c).flatten(), a, b
 
     def check_results(self, *args):
         actual=self.get_actual_results_unpadded()
-        expected=self.get_expected_results_unpadded()
+        expected, a, b=self.get_expected_results_unpadded()
+        np.reshape(actual,(8,32))
+        np.reshape(a,(8,32))
+        np.reshape(b,(8,32))
+        print(a)
+        print(b)
         print(actual)
         print(expected)
         return super().check_results(actual,expected, rtol=self.ERR_THRESHOLD[self.prec])
