@@ -24,7 +24,11 @@ def main():
           subprocess.call(['tail', f"{txtFileDir}both.txt", "-c",f'{len(file_content)//2}' ],stdout=fr)
           fr.close()
          # subprocess.call(['cat', f"{txtFileDir}right.txt" ])
-          return subprocess.call(['diff',  f"{txtFileDir}left.txt",f"{txtFileDir}right.txt" ])
+          result =  subprocess.call(['diff',  f"{txtFileDir}left.txt",f"{txtFileDir}right.txt" ])
+          if result == 0:
+               sys.exit(1)
+          else:
+               sys.exit(0)
      except ValueError:
           print("Possible Error Detected! Re-run this verification script.")
           raise Exception("Possible Error Detected! Re-run this verification script.")
