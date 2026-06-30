@@ -154,12 +154,12 @@ check(){
                             then
                                 echo -e "\t\t$buildName...... TIMEOUT"
                             else
-                                if [[ $(python $verifyScript "$buildDir/verify-output.txt"; echo $?) != "0" ]];
-                                then
-                                    echo -e "\t\t$buildName...... OK"
-                                else
-                                    echo -e "\t\t$buildName...... ERROR"
-                                fi
+                            if ! python "$verifyScript" "$buildDir/verify-output.txt"; then
+                                echo -e "\t\t$buildName...... ERROR"
+                            else
+                                echo -e "\t\t$buildName...... OK"
+                            fi
+                               
                             fi
                 fi
                 
