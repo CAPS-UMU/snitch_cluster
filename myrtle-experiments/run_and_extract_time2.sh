@@ -121,14 +121,6 @@ main(){
     fi
 
     # extract timing info
-    genTrace logs "trace_hart_00000"
-    genTrace logs "trace_hart_00001"
-    genTrace logs "trace_hart_00002"
-    genTrace logs "trace_hart_00003"
-    genTrace logs "trace_hart_00004"
-    genTrace logs "trace_hart_00005"
-    genTrace logs "trace_hart_00006"
-    genTrace logs "trace_hart_00007"
     genTrace logs "trace_hart_00008" dma
     python $extractKernelTime $expName $logs $M $N $K $m $n $k
     correct=$(echo $?)
