@@ -236,14 +236,25 @@ onlyExtract(){
             cd $buildDir
             gen_trace="$rootDir/util/trace/gen_trace.py"
             llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
-            if [[ -f "logs/trace_hart_00008.dasm" ]]; then
-                $gen_trace "logs/trace_hart_00008.dasm" \
-                    --mc-exec $llvm_mc --mc-flags "-disassemble -mcpu=snitch" \
-                    --dump-hart-perf "$logs/hart-trace_hart_00008-perf.json" \
-                    -o /dev/null
-                rm -f logs/trace_hart_00008.dasm
+            if [[ -n "$TRACE_DMA_ONLY" ]]; then
+                if [[ -f "logs/trace_hart_00008.dasm" ]]; then
+                    $gen_trace "logs/trace_hart_00008.dasm" \
+                        --mc-exec $llvm_mc --mc-flags "-disassemble -mcpu=snitch" \
+                        --dump-hart-perf "$logs/hart-trace_hart_00008-perf.json" \
+                        -o /dev/null
+                    rm -f logs/trace_hart_00008.dasm
+                fi
+                rm -f logs/trace_hart_0000[0-7].dasm
+            else
+                for hartNum in 00000 00001 00002 00003 00004 00005 00006 00007 00008; do
+                    if [[ ! -f "logs/hart-trace_hart_${hartNum}-perf.json" ]]; then
+                        genTrace logs "trace_hart_${hartNum}"
+                        if [[ $? != "0" ]]; then
+                            echo -e "\tmany_gemms.sh: Error during gentrace for hart ${hartNum}!"
+                        fi
+                    fi
+                done
             fi
-            rm -f logs/trace_hart_0000[0-7].dasm
             python $extractKernelTime $expName $logs $M $N $K $m $n $k
             rm -f $logs/*.dasm $logs/*.txt
             rm -rf "$buildDir/dma_trace_00008_00000.log"

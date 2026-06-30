@@ -121,7 +121,13 @@ main(){
     fi
 
     # extract timing info
-    genTrace logs "trace_hart_00008" dma
+    if [[ -n "$TRACE_DMA_ONLY" ]]; then
+        genTrace logs "trace_hart_00008" dma
+    else
+        for hartNum in 00000 00001 00002 00003 00004 00005 00006 00007 00008; do
+            genTrace logs "trace_hart_${hartNum}"
+        done
+    fi
     python $extractKernelTime $expName $logs $M $N $K $m $n $k
     correct=$(echo $?)
     if [[ "$correct" == "0" ]]; 
