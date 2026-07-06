@@ -850,6 +850,13 @@ module snitch_cc #(
   ////////////
 
   // pragma translate_off
+    if (
+`ifdef TRACE_DMA_ONLY
+    IsaCfg.Xdma
+`else
+    1'b1
+`endif
+  ) begin : gen_tracer
   int f;
   string fn;
   logic [63:0] cycle;
@@ -992,6 +999,7 @@ module snitch_cc #(
   final begin
     $fclose(f);
   end
+  end : gen_tracer
   // verilog_lint: waive-stop always-ff-non-blocking
   // pragma translate_on
 

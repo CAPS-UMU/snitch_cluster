@@ -153,10 +153,14 @@ def main():
             f"{logs}/hart-trace_hart_00007-perf.json",
         ]
         computeCores = []
+        missing_compute_jsons = False
 
-        # region count reality check
+        # region count reality check — skip cores whose JSON wasn't generated (TRACE_DMA_ONLY mode)
         for idx in range(0, len(computeCoreFileNames)):
             f = computeCoreFileNames[idx]
+            if not os.path.exists(f):
+                missing_compute_jsons = True
+                continue
             rgc = regionCount(M, N, K, m, n, k, idx)
             with open(f) as json_file:
                 data = json.load(json_file)
@@ -168,19 +172,37 @@ def main():
                     computeCores.append((f, rgc, idx))
         tracesInfo = {}
 
-        # extract info from compute core traces
+        # extract info from compute core traces; fall back to analytics when JSON is absent
         coreComplexStarts = []
         coreComplexEnds = []
-        for c, rgc, idx in computeCores:
-            with open(c) as json_file:
-                data = json.load(json_file)
-                cc_trace_info = parseComputeCoreTrace(data, rgc, idx)
-                tracesInfo.update(cc_trace_info)
-                coreComplexStarts.append(data[1]["start"])
-                coreComplexEnds.append(data[rgc - 2]["end"])
-        maxEnd = max(coreComplexEnds)
-        minStart = min(coreComplexStarts)
-        tracesInfo["Kernel Time"] = maxEnd - minStart + 1
+        for idx in range(0, len(computeCoreFileNames)):
+            f = computeCoreFileNames[idx]
+            if not os.path.exists(f):
+                # compute cc_tiles analytically; timing values unavailable
+                rgc = regionCount(M, N, K, m, n, k, idx)
+                cc_tiles = (rgc - 1) / 3
+                tracesInfo[f"cc_tiles_cc_{idx}"] = cc_tiles
+                for col in [
+                    f"Global Sim E2E_cc_{idx}", f"Core Complex E2E_cc_{idx}",
+                    f"Sum Region Cycles_cc_{idx}", f"Before Computation_cc_{idx}",
+                    f"After Computation_cc_{idx}", f"core{idx}",
+                    f"SSR Config Time_cc_{idx}", f"Overlap Stall Time_cc_{idx}",
+                    f"Raw Compute Time_cc_{idx}", f"Sum Raw Compute + Overlap Stall_cc_{idx}",
+                    f"Sum Compute+Stall+Pro+Epi_cc_{idx}", f"Sum Compute + SSR Configs_cc_{idx}",
+                ]:
+                    tracesInfo[col] = -1
+            else:
+                rgc = regionCount(M, N, K, m, n, k, idx)
+                with open(f) as json_file:
+                    data = json.load(json_file)
+                    cc_trace_info = parseComputeCoreTrace(data, rgc, idx)
+                    tracesInfo.update(cc_trace_info)
+                    coreComplexStarts.append(data[1]["start"])
+                    coreComplexEnds.append(data[rgc - 2]["end"])
+        if coreComplexStarts:
+            tracesInfo["Kernel Time"] = max(coreComplexEnds) - min(coreComplexStarts) + 1
+        else:
+            tracesInfo["Kernel Time"] = -1
 
         # extract info from dma core trace
         with open(dmaFileName) as json_file:
@@ -225,15 +247,19 @@ def main():
         df["Sum Compute + SSR Configs Total"] = sumOverComputeCores(df,"Sum Compute + SSR Configs")
         df["FakeNN JSON Name"] = expName
         for i in range(0, 8):
-            df[f"Diff from dma E2E_cc_{i}"] = abs(
-                df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"]
-            )
-            df[f"Sum Regions - Core Complex E2E_cc_{i}"] = abs(
-                df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"]
-            )
+            if missing_compute_jsons:
+                df[f"Diff from dma E2E_cc_{i}"] = -1
+                df[f"Sum Regions - Core Complex E2E_cc_{i}"] = -1
+            else:
+                df[f"Diff from dma E2E_cc_{i}"] = abs(
+                    df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"]
+                )
+                df[f"Sum Regions - Core Complex E2E_cc_{i}"] = abs(
+                    df["Global Sim E2E_dma"] - df[f"Core Complex E2E_cc_{i}"]
+                )
 
-        # check for glaring errors
-        if not checkCorrectness(df):
+        # check for glaring errors (skip when compute core traces were not available)
+        if not missing_compute_jsons and not checkCorrectness(df):
             return 1
         # export results to csv
         df.to_csv(f"{logs}/{expName}.csv", index=False)
