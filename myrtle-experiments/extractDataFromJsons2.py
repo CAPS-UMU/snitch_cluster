@@ -158,9 +158,13 @@ def main():
         # region count reality check — skip cores whose JSON wasn't generated (TRACE_DMA_ONLY mode)
         for idx in range(0, len(computeCoreFileNames)):
             f = computeCoreFileNames[idx]
-            if not os.path.exists(f):
+            if not os.path.exists(f) and TRACE_DMA_ONLY == "1":
                 missing_compute_jsons = True
                 continue
+            else:
+                raise Exception(
+                    f"Error: compute core trace file {f} does not exist. If you compiled with TRACE_DMA_ONLY=1, then you must also run this script with TRACE_DMA_ONLY=1."
+                )
             rgc = regionCount(M, N, K, m, n, k, idx)
             with open(f) as json_file:
                 data = json.load(json_file)
@@ -178,7 +182,6 @@ def main():
         for idx in range(0, len(computeCoreFileNames)):
             f = computeCoreFileNames[idx]
             if not os.path.exists(f):
-                # compute cc_tiles analytically; timing values unavailable
                 rgc = regionCount(M, N, K, m, n, k, idx)
                 cc_tiles = (rgc - 1) / 3
                 tracesInfo[f"cc_tiles_cc_{idx}"] = cc_tiles
