@@ -11,7 +11,10 @@ echo -e "\tmany_gemms.sh: $date"
 echo -e "\t               Remember to set your environment variables correctly..." 
 echo -e "\t               gemmDir is $gemmDir" # we require this variable to be set as an env var ahead of time.
 echo -e "\t               experimentDir is $experimentDir" # we require this variable to be set as an env var ahead of time.
-echo -e "\t               TIMEOUT is $TIMEOUT" # we require this variable to be set as an env var ahead of time.
+echo -e "\t               WALL_TIMEOUT is $WALL_TIMEOUT" # optional env var: wall-clock timeout in seconds (0/unset = disabled)
+echo -e "\t               CYCLE_TIMEOUT is $CYCLE_TIMEOUT" # optional env var: simulator cycle-count timeout (0/unset = disabled)
+export TRACE_DMA_ONLY="${TRACE_DMA_ONLY:-1}"
+echo -e "\t               TRACE_DMA_ONLY is $TRACE_DMA_ONLY" # optional env var: if set to 1 (default), only the DMA hart's trace will be READ, needs to be compiled with the same flag!! (saves time and disk space)
 echo -e "\t               beta is $beta" # defaults to 0 if not set
 echo -e "\t               spm_opt is $spm_opt" # defaults to 0 if not set
 # the environment variable gemmDir should be set to the blas kernel directory from which you wish to compile
@@ -20,11 +23,11 @@ params="$gemmDir/data/params.json"
 prepareParamsScript="$here/prepareParams.py"
 extractKernelTime="$here/extractDataFromJsons2.py"
 verifyScript="$here/check.py"
-
+gen_trace="$rootDir/util/trace/gen_trace.py"
+llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
+ 
 genTrace(){
-    gen_trace="$rootDir/util/trace/gen_trace.py"
-    llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
-    logsDir="$1" # absolute path of the logs directory
+   logsDir="$1" # absolute path of the logs directory
     logWOFE="$2" # log file without the .dasm file extension
     dma="$3"
     echo "logsDir is $logsDir and log file is $logWOFE and dma is $dma"
@@ -234,7 +237,7 @@ onlyExtract(){
             echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             logs="$buildDir/logs"
             cd $buildDir
-            if [[ -f "logs/trace_hart_00000.dasm" ]]; then
+            if [[ "$TRACE_DMA_ONLY" != "1" ]]; then
                 genTrace logs "trace_hart_00000"
                 genTrace logs "trace_hart_00001"
                 genTrace logs "trace_hart_00002"
@@ -246,8 +249,6 @@ onlyExtract(){
                 genTrace logs "trace_hart_00008" dma
                 rm -f logs/trace_hart_0000[0-8].dasm
             else
-                gen_trace="$rootDir/util/trace/gen_trace.py"
-                llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
                 if [[ -f "logs/trace_hart_00008.dasm" ]]; then
                     $gen_trace "logs/trace_hart_00008.dasm" \
                         --mc-exec $llvm_mc --mc-flags "-disassemble -mcpu=snitch" \

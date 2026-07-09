@@ -40,9 +40,9 @@ _kill_tree(){
 }
 
 timeout(){
-    # Start verify.py with cycle-limit disabled (--myrtleTimeout=0);
-    # wall-clock enforcement is handled by the elapsed counter below.
-    $gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf "--myrtleTimeout=0" > verify-output.txt &
+    # Start verify.py with the cycle-limit set from CYCLE_TIMEOUT (0 = disabled);
+    # wall-clock enforcement is handled by WALL_TIMEOUT via the elapsed counter below.
+    $gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf "--myrtleTimeout=${CYCLE_TIMEOUT:-0}" > verify-output.txt &
     PID_A=$!
     echo "Started Process A (PID: $PID_A)"
     elapsed=0
@@ -55,9 +55,10 @@ timeout(){
             break
         fi
 
-        # C++ cycle-limit timeout (legacy path, only fires if --myrtleTimeout > 0)
+        # CYCLE_TIMEOUT: C++ cycle-limit timeout (only fires if --myrtleTimeout > 0,
+        # i.e. CYCLE_TIMEOUT was set)
         if grep -q "Myrtle Experiment Timeout" output.txt 2>/dev/null; then
-            echo "Cycle-limit timeout detected! Cleaning up process tree..."
+            echo "Cycle-limit timeout (CYCLE_TIMEOUT=${CYCLE_TIMEOUT}) detected! Cleaning up process tree..."
             _kill_tree $PID_A
             EXIT_STATUS=1
             echo "simulation failed on timeout." > verify-output.txt
@@ -65,9 +66,9 @@ timeout(){
             break
         fi
 
-        # Wall-clock timeout
-        if [[ ${TIMEOUT:-0} -gt 0 ]] && [[ $elapsed -ge ${TIMEOUT} ]]; then
-            echo "Wall-clock timeout after ${TIMEOUT}s! Cleaning up process tree..."
+        # WALL_TIMEOUT: wall-clock timeout
+        if [[ ${WALL_TIMEOUT:-0} -gt 0 ]] && [[ $elapsed -ge ${WALL_TIMEOUT} ]]; then
+            echo "Wall-clock timeout after ${WALL_TIMEOUT}s! Cleaning up process tree..."
             _kill_tree $PID_A
             EXIT_STATUS=1
             echo "simulation failed on timeout." > verify-output.txt
@@ -127,7 +128,7 @@ main(){
     # extract timing info: process all harts when compute-core traces were
     # generated (a TRACE_DMA_ONLY build only emits the DMA hart's .dasm file,
     # in which case fall back to processing just that one)
-    if [[ -f "logs/trace_hart_00000.dasm" ]]; then
+    if [[ "$TRACE_DMA_ONLY" != "1" ]]; then
         genTrace logs "trace_hart_00000"
         genTrace logs "trace_hart_00001"
         genTrace logs "trace_hart_00002"

@@ -172,7 +172,7 @@ def main():
                     computeCores.append((f, rgc, idx))
         tracesInfo = {}
 
-        # extract info from compute core traces; fall back to analytics when JSON is absent
+        # extract info from compute core traces
         coreComplexStarts = []
         coreComplexEnds = []
         for idx in range(0, len(computeCoreFileNames)):
