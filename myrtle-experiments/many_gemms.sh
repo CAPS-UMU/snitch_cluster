@@ -11,7 +11,10 @@ echo -e "\tmany_gemms.sh: $date"
 echo -e "\t               Remember to set your environment variables correctly..." 
 echo -e "\t               gemmDir is $gemmDir" # we require this variable to be set as an env var ahead of time.
 echo -e "\t               experimentDir is $experimentDir" # we require this variable to be set as an env var ahead of time.
-echo -e "\t               TIMEOUT is $TIMEOUT" # we require this variable to be set as an env var ahead of time.
+echo -e "\t               WALL_TIMEOUT is $WALL_TIMEOUT" # optional env var: wall-clock timeout in seconds (0/unset = disabled)
+echo -e "\t               CYCLE_TIMEOUT is $CYCLE_TIMEOUT" # optional env var: simulator cycle-count timeout (0/unset = disabled)
+export TRACE_DMA_ONLY="${TRACE_DMA_ONLY:-1}"
+echo -e "\t               TRACE_DMA_ONLY is $TRACE_DMA_ONLY" # optional env var: if set to 1 (default), only the DMA hart's trace will be READ, needs to be compiled with the same flag!! (saves time and disk space)
 echo -e "\t               beta is $beta" # defaults to 0 if not set
 echo -e "\t               spm_opt is $spm_opt" # defaults to 0 if not set
 # the environment variable gemmDir should be set to the blas kernel directory from which you wish to compile
@@ -20,11 +23,11 @@ params="$gemmDir/data/params.json"
 prepareParamsScript="$here/prepareParams.py"
 extractKernelTime="$here/extractDataFromJsons2.py"
 verifyScript="$here/check.py"
-
+gen_trace="$rootDir/util/trace/gen_trace.py"
+llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
+ 
 genTrace(){
-    gen_trace="$rootDir/util/trace/gen_trace.py"
-    llvm_mc="/tools/riscv-llvm/bin/llvm-mc"
-    logsDir="$1" # absolute path of the logs directory
+   logsDir="$1" # absolute path of the logs directory
     logWOFE="$2" # log file without the .dasm file extension
     dma="$3"
     echo "logsDir is $logsDir and log file is $logWOFE and dma is $dma"
@@ -104,7 +107,7 @@ check(){
                 if [[ $(ls "$logs/$buildName.csv" &> /dev/null; echo $?) != "0" ]];
                         then
                             echo -e "\t\t$buildName... No csv with time measurements."
-                            if [[ $(ls "$logs/trace_hart_00000.dasm" &> /dev/null; echo $?) == "0" ]];
+                            if [[ $(ls "$logs/trace_hart_00008.dasm" &> /dev/null; echo $?) == "0" ]];
                             then
                                 verifyOutput="$buildDir/verify-output.txt"
                                 empty="0 $verifyOutput"
@@ -172,7 +175,7 @@ runAndExtract(){
     ss="$1"
     echo -e "\tmany_gemms.sh: RUN + EXPORT step"
     uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
-    batchSize=4 #5 #$(nproc)
+    batchSize=${SIM_BATCH_SIZE:-$(nproc)}
     counter=0
     echo -e "\t\tBatch size is $batchSize"
     for ts in $(grep -oE $uniquePointRegex $ss)
@@ -234,147 +237,31 @@ onlyExtract(){
             echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             logs="$buildDir/logs"
             cd $buildDir
-            hartNum="00000"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
+            if [[ "$TRACE_DMA_ONLY" != "1" ]]; then
+                genTrace logs "trace_hart_00000"
+                genTrace logs "trace_hart_00001"
+                genTrace logs "trace_hart_00002"
+                genTrace logs "trace_hart_00003"
+                genTrace logs "trace_hart_00004"
+                genTrace logs "trace_hart_00005"
+                genTrace logs "trace_hart_00006"
+                genTrace logs "trace_hart_00007"
+                genTrace logs "trace_hart_00008" dma
+                rm -f logs/trace_hart_0000[0-8].dasm
+            else
+                if [[ -f "logs/trace_hart_00008.dasm" ]]; then
+                    $gen_trace "logs/trace_hart_00008.dasm" \
+                        --mc-exec $llvm_mc --mc-flags "-disassemble -mcpu=snitch" \
+                        --dump-hart-perf "$logs/hart-trace_hart_00008-perf.json" \
+                        -o /dev/null
+                    rm -f logs/trace_hart_00008.dasm
                 fi
-            fi
-            hartNum="00001"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00002"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00003"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00004"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00005"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00006"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00007"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
-            fi
-            hartNum="00008"
-            ls "logs/hart-trace_hart_"$hartNum"-perf.json" &> /dev/null
-            correct=$(echo $?)
-            if [[ "$correct" != "0" ]]; 
-            then
-                genTrace logs "trace_hart_"$hartNum
-                correct=$(echo $?)
-                if [[ "$correct" == "0" ]]; 
-                then
-                    rm -rf "trace_hart_"$hartNum".dasm"
-                    rm -rf "trace_hart_"$hartNum".txt"
-                else
-                    echo -e "\tmany_gemms.sh: Error during gentrace!"
-                fi
+                rm -f logs/trace_hart_0000[0-7].dasm
             fi
             python $extractKernelTime $expName $logs $M $N $K $m $n $k
-            rm -rf $logs/*.dasm 
-            rm -rf $logs/*.txt  
+            rm -f $logs/*.dasm $logs/*.txt
             rm -rf "$buildDir/dma_trace_00008_00000.log"
-            # TODO: aggregate timing info into single json
-            cd $here            
+            cd $here
             done
 }
 

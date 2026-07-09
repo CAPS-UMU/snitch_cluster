@@ -32,3 +32,13 @@ gmon.out
 /tools/
 /build/
 /snitch.egg-info/
+
+# Claude
+CLAUDE.md
+.claude/
+
+# Myrtle repo
+myrtle/
+
+#testrun exp
+testrun/run*
