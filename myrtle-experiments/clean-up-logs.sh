@@ -18,12 +18,21 @@ find . -name trace_hart_00004.txt >> to-clean.txt
 find . -name trace_hart_00005.txt >> to-clean.txt
 find . -name trace_hart_00006.txt >> to-clean.txt
 find . -name trace_hart_00007.txt >> to-clean.txt
+find . -name trace_hart_00000.dasm >> to-clean.txt
+find . -name trace_hart_00001.dasm >> to-clean.txt
+find . -name trace_hart_00002.dasm >> to-clean.txt
+find . -name trace_hart_00003.dasm >> to-clean.txt
+find . -name trace_hart_00004.dasm >> to-clean.txt
+find . -name trace_hart_00005.dasm >> to-clean.txt
+find . -name trace_hart_00006.dasm >> to-clean.txt
+find . -name trace_hart_00007.dasm >> to-clean.txt
+find . -name matmul_padded.dump >> to-clean.txt
 
 # clean up all the files
 while read -r line
 do
     echo "$line"
-    clean "$line"
+    #clean "$line"
 done < "to-clean.txt"
 
 cd myrtle-experiments
