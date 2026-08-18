@@ -203,7 +203,7 @@ runAndExtract(){
                 echo -e "\t\t About to run $M $N $K $m $n $k with build directory $buildDir"
                 # run gemm
                 # nohup bash test.sh $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k &> "$buildDir/test.txt" & 
-                nohup bash "$here/run_and_extract_time2.sh" $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $rootDir &> "$buildDir/output.txt" & 
+                nohup bash "$here/run_and_extract_time2.sh" $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $rootDir $TRACE_DMA_ONLY &> "$buildDir/output.txt" & 
                 counter=$((counter+1))
             fi 
             if (( $counter % $batchSize == 0 )); then
@@ -258,7 +258,7 @@ onlyExtract(){
                 fi
                 rm -f logs/trace_hart_0000[0-7].dasm
             fi
-            python $extractKernelTime $expName $logs $M $N $K $m $n $k
+            python $extractKernelTime $expName $logs $M $N $K $m $n $k $TRACE_DMA_ONLY
             rm -f $logs/*.dasm $logs/*.txt
             rm -rf "$buildDir/dma_trace_00008_00000.log"
             cd $here

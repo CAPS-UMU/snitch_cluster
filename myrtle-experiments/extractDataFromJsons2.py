@@ -6,7 +6,7 @@ import os.path
 import math
 
 print(
-    "\n\t\textractDataFromJsons.py: ATTN: only many_gemms.sh should call this script."
+    "\n\t\textractDataFromJsons2.py: ATTN: only many_gemms.sh should call this script."
 )
 
 
@@ -119,10 +119,10 @@ def regionCount(M, N, K, m, n, k, idx):
 
 
 def main():
-    if len(sys.argv) != 9:
+    if len(sys.argv) != 10:
         print("\t", end="")
         print(
-            f"USAGE: Requires two string arguments, experiment name and the full path to the experiment's logs folder, followed by M N K m n k.\nYou passed in {len(sys.argv)} args"
+            f"USAGE: Requires two string arguments, experiment name and the full path to the experiment's logs folder, followed by M N K m n k and TRACE_DMA_ONLY flag.\nYou passed in {len(sys.argv)} args"
         )
     else:
         expName = sys.argv[1]
@@ -130,7 +130,7 @@ def main():
         if not os.path.exists(logs):
             print("\t\t", end="")
             print(
-                f"extractKernelTimeFromJsons.py: Error: directory {logs} does not exist."
+                f"extractKernelTimeFromJsons2.py: Error: directory {logs} does not exist."
             )
             return 1
         M = int(sys.argv[3])
@@ -139,6 +139,8 @@ def main():
         m = int(sys.argv[6])
         n = int(sys.argv[7])
         k = int(sys.argv[8])
+        traceDMAOnly=int(sys.argv[9])
+        
 
         # trace file names are hardcoded
         dmaFileName = f"{logs}/hart-trace_hart_00008-perf.json"
@@ -158,13 +160,14 @@ def main():
         # region count reality check — skip cores whose JSON wasn't generated (TRACE_DMA_ONLY mode)
         for idx in range(0, len(computeCoreFileNames)):
             f = computeCoreFileNames[idx]
-            if not os.path.exists(f) and TRACE_DMA_ONLY == "1":
-                missing_compute_jsons = True
-                continue
-            else:
-                raise Exception(
-                    f"Error: compute core trace file {f} does not exist. If you compiled with TRACE_DMA_ONLY=1, then you must also run this script with TRACE_DMA_ONLY=1."
-                )
+            if not os.path.exists(f):
+                if traceDMAOnly == 1:
+                    missing_compute_jsons = True
+                    continue
+                else:
+                    raise Exception(
+                        f"Error: compute core trace file {f} does not exist. If you compiled with TRACE_DMA_ONLY=1, then you must also run this script with TRACE_DMA_ONLY=1. Value of TRACE_DMA_ONLY passed in was {traceDMAOnly}"
+                    )
             rgc = regionCount(M, N, K, m, n, k, idx)
             with open(f) as json_file:
                 data = json.load(json_file)
