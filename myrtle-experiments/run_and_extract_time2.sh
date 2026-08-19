@@ -11,6 +11,7 @@
 # m
 # n
 # k
+# TRACE_DMA_ONLY // value of env var TRACE_DMA_ONLY
 
 buildDir=$1
 extractKernelTime=$2
@@ -23,6 +24,7 @@ m=$8
 n=$9
 k=${10}
 here=${11}
+traceDMAOnly=${12}
 elf=$(basename $gemmDir)
 
 
@@ -107,7 +109,7 @@ genTrace(){
 
 main(){
 
-    echo -e "\trun_and_extract_time.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k"
+    echo -e "\trun_and_extract_time2.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $traceDMAOnly"
 
     cd $buildDir
     #correct=$($gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf --myrtleTimeout=5 > verify-output.txt; echo $?)
@@ -115,7 +117,7 @@ main(){
     correct=$(echo $?)
     if [[ "$correct" != "0" ]]; 
     then
-        echo -e "\trun_and_extract_time.sh: Simulation failed, so skipping export step. $correct"
+        echo -e "\trun_and_extract_time2.sh: Simulation failed, so skipping export step. $correct"
         rm -rf "dma_trace_00008_00000.log"
         # delete huge log files
         cd $logs
@@ -128,7 +130,7 @@ main(){
     # extract timing info: process all harts when compute-core traces were
     # generated (a TRACE_DMA_ONLY build only emits the DMA hart's .dasm file,
     # in which case fall back to processing just that one)
-    if [[ "$TRACE_DMA_ONLY" != "1" ]]; then
+    if [[ "$traceDMAOnly" != "1" ]]; then
         genTrace logs "trace_hart_00000"
         genTrace logs "trace_hart_00001"
         genTrace logs "trace_hart_00002"
@@ -149,18 +151,18 @@ main(){
         rm -f logs/trace_hart_00008.dasm
         rm -f logs/trace_hart_0000[0-7].dasm
     fi
-    python $extractKernelTime $expName $logs $M $N $K $m $n $k
+    python $extractKernelTime $expName $logs $M $N $K $m $n $k $traceDMAOnly
     correct=$(echo $?)
     if [[ "$correct" == "0" ]];
     then
-        echo -e "\trun_and_extract_time.sh: Successfully exported timing information. Deleting logs..."
+        echo -e "\trun_and_extract_time2.sh: Successfully exported timing information. Deleting logs..."
         # .dasm files already deleted above; clean up any other leftovers
         cd $logs
         rm -f *.dasm *.txt
         cd ..
         rm -rf "dma_trace_00008_00000.log"
     else
-        echo -e "\trun_and_extract_time.sh: Error exporting timing info!"
+        echo -e "\trun_and_extract_time2.sh: Error exporting timing info!"
     fi
 }
 
