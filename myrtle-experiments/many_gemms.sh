@@ -13,7 +13,6 @@ echo -e "\t               gemmDir is $gemmDir" # we require this variable to be 
 echo -e "\t               experimentDir is $experimentDir" # we require this variable to be set as an env var ahead of time.
 echo -e "\t               WALL_TIMEOUT is $WALL_TIMEOUT" # optional env var: wall-clock timeout in seconds (0/unset = disabled)
 echo -e "\t               CYCLE_TIMEOUT is $CYCLE_TIMEOUT" # optional env var: simulator cycle-count timeout (0/unset = disabled)
-export TRACE_DMA_ONLY="${TRACE_DMA_ONLY:-1}"
 echo -e "\t               TRACE_DMA_ONLY is $TRACE_DMA_ONLY" # optional env var: if set to 1 (default), only the DMA hart's trace will be READ, needs to be compiled with the same flag!! (saves time and disk space)
 echo -e "\t               beta is $beta" # defaults to 0 if not set
 echo -e "\t               spm_opt is $spm_opt" # defaults to 0 if not set
@@ -175,7 +174,8 @@ runAndExtract(){
     ss="$1"
     echo -e "\tmany_gemms.sh: RUN + EXPORT step"
     uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
-    batchSize=${SIM_BATCH_SIZE:-$(nproc)}
+    #batchSize=${SIM_BATCH_SIZE:-$(nproc)}
+    batchSize=12
     counter=0
     echo -e "\t\tBatch size is $batchSize"
     for ts in $(grep -oE $uniquePointRegex $ss)
