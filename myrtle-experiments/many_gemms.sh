@@ -7,8 +7,9 @@ echo -e "\tmany_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpa
 rootDir="/repo"
 here="$rootDir/myrtle-experiments" # save current directory so we can return to it
 date=$(date)
+traceDMAValFile="target/sim/build/work-vlt/traceDMAOnlyValDuringMake.txt"
 # check the value of env var TRACE_DMA_ONLY when verilator was built
-TRACE_DMA_ONLY=$(head -n 1 target/sim/build/work-vlt/traceDMAOnlyValDuringMake.txt)
+TRACE_DMA_ONLY=$(head -n 1 $traceDMAValFile)
 if [[ "$TRACE_DMA_ONLY" == "" ]]; 
     then
         TRACE_DMA_ONLY="(unset)"
@@ -349,6 +350,13 @@ main(){
     if [[ "$exists" != "0" ]]; 
     then
         echo -e "\tmany_gemms.sh: Error: $ss csv file does not exist. Errno $exists"
+        return 1
+    fi
+    # check for verilator build setting
+    exists=$(ls $traceDMAValFile &> /dev/null; echo $?)
+    if [[ "$exists" != "0" ]]; 
+    then
+        echo -e "\tmany_gemms.sh: Error: $traceDMAValFile file does not exist. Errno $exists"
         return 1
     fi
 
