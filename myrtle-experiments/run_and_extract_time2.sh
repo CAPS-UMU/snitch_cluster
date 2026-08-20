@@ -130,7 +130,7 @@ main(){
     # extract timing info: process all harts when compute-core traces were
     # generated (a TRACE_DMA_ONLY build only emits the DMA hart's .dasm file,
     # in which case fall back to processing just that one)
-    if [[ "$traceDMAOnly" != "1" ]]; then
+    if [[ "$traceDMAOnly" == "(unset)" ]]; then
         genTrace logs "trace_hart_00000"
         genTrace logs "trace_hart_00001"
         genTrace logs "trace_hart_00002"

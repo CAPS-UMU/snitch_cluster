@@ -139,7 +139,7 @@ def main():
         m = int(sys.argv[6])
         n = int(sys.argv[7])
         k = int(sys.argv[8])
-        traceDMAOnly=int(sys.argv[9])
+        traceDMAOnly=sys.argv[9]
         
 
         # trace file names are hardcoded
@@ -161,12 +161,12 @@ def main():
         for idx in range(0, len(computeCoreFileNames)):
             f = computeCoreFileNames[idx]
             if not os.path.exists(f):
-                if traceDMAOnly == 1:
+                if traceDMAOnly != "(unset)":
                     missing_compute_jsons = True
                     continue
                 else:
                     raise Exception(
-                        f"Error: compute core trace file {f} does not exist. If you compiled with TRACE_DMA_ONLY=1, then you must also run this script with TRACE_DMA_ONLY=1. Value of TRACE_DMA_ONLY passed in was {traceDMAOnly}"
+                        f"Error: compute core trace file {f} does not exist. Verilator was built when env var TRACE_DMA_ONLY was left unset. If you don't need compute core traces, rebuild verilator with TRACE_DMA_ONLY=1"
                     )
             rgc = regionCount(M, N, K, m, n, k, idx)
             with open(f) as json_file:

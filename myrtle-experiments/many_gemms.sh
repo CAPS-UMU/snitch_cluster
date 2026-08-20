@@ -7,13 +7,19 @@ echo -e "\tmany_gemms.sh: Invoke this script with 'bash many_gemms.sh <searchSpa
 rootDir="/repo"
 here="$rootDir/myrtle-experiments" # save current directory so we can return to it
 date=$(date)
+# check the value of env var TRACE_DMA_ONLY when verilator was built
+TRACE_DMA_ONLY=$(head -n 1 target/sim/build/work-vlt/traceDMAOnlyValDuringMake.txt)
+if [[ "$TRACE_DMA_ONLY" == "" ]]; 
+    then
+        TRACE_DMA_ONLY="(unset)"
+fi
 echo -e "\tmany_gemms.sh: $date" 
 echo -e "\t               Remember to set your environment variables correctly..." 
 echo -e "\t               gemmDir is $gemmDir" # we require this variable to be set as an env var ahead of time.
 echo -e "\t               experimentDir is $experimentDir" # we require this variable to be set as an env var ahead of time.
 echo -e "\t               WALL_TIMEOUT is $WALL_TIMEOUT" # optional env var: wall-clock timeout in seconds (0/unset = disabled)
 echo -e "\t               CYCLE_TIMEOUT is $CYCLE_TIMEOUT" # optional env var: simulator cycle-count timeout (0/unset = disabled)
-echo -e "\t               TRACE_DMA_ONLY is $TRACE_DMA_ONLY" # optional env var: if set to 1, only the DMA hart's trace will be READ, needs to be compiled with the same flag!! (saves time and disk space)
+echo -e "\t               TRACE_DMA_ONLY (used to build verilator) was $TRACE_DMA_ONLY" # optional env var: if not left unset, only the DMA hart's trace will be generated (saves time and disk space)
 echo -e "\t               beta is $beta" # defaults to 0 if not set
 echo -e "\t               spm_opt is $spm_opt" # defaults to 0 if not set
 # the environment variable gemmDir should be set to the blas kernel directory from which you wish to compile
