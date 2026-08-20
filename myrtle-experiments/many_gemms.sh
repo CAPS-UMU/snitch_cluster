@@ -13,8 +13,6 @@ echo -e "\t               gemmDir is $gemmDir" # we require this variable to be 
 echo -e "\t               experimentDir is $experimentDir" # we require this variable to be set as an env var ahead of time.
 echo -e "\t               WALL_TIMEOUT is $WALL_TIMEOUT" # optional env var: wall-clock timeout in seconds (0/unset = disabled)
 echo -e "\t               CYCLE_TIMEOUT is $CYCLE_TIMEOUT" # optional env var: simulator cycle-count timeout (0/unset = disabled)
-export TRACE_DMA_ONLY="${TRACE_DMA_ONLY:-1}"
-echo -e "\t               TRACE_DMA_ONLY is $TRACE_DMA_ONLY" # optional env var: if set to 1 (default), only the DMA hart's trace will be READ, needs to be compiled with the same flag!! (saves time and disk space)
 echo -e "\t               beta is $beta" # defaults to 0 if not set
 echo -e "\t               spm_opt is $spm_opt" # defaults to 0 if not set
 # the environment variable gemmDir should be set to the blas kernel directory from which you wish to compile
@@ -203,7 +201,7 @@ runAndExtract(){
                 echo -e "\t\t About to run $M $N $K $m $n $k with build directory $buildDir"
                 # run gemm
                 # nohup bash test.sh $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k &> "$buildDir/test.txt" & 
-                nohup bash "$here/run_and_extract_time2.sh" $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $rootDir $TRACE_DMA_ONLY &> "$buildDir/output.txt" & 
+                nohup bash "$here/run_and_extract_time2.sh" $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $rootDir &> "$buildDir/output.txt" &
                 counter=$((counter+1))
             fi 
             if (( $counter % $batchSize == 0 )); then
@@ -237,7 +235,11 @@ onlyExtract(){
             echo -e "\t\t$M $N $K $m $n $k with build directory $buildDir"
             logs="$buildDir/logs"
             cd $buildDir
-            if [[ "$TRACE_DMA_ONLY" != "1" ]]; then
+            # Detect trace mode from the actual simulation output rather than
+            # trusting a possibly-stale TRACE_DMA_ONLY env var, since it has
+            # no enforced relationship to what the currently-loaded verilator
+            # model was actually compiled with.
+            if [[ -f "logs/trace_hart_00000.dasm" ]]; then
                 genTrace logs "trace_hart_00000"
                 genTrace logs "trace_hart_00001"
                 genTrace logs "trace_hart_00002"
@@ -258,7 +260,7 @@ onlyExtract(){
                 fi
                 rm -f logs/trace_hart_0000[0-7].dasm
             fi
-            python $extractKernelTime $expName $logs $M $N $K $m $n $k $TRACE_DMA_ONLY
+            python $extractKernelTime $expName $logs $M $N $K $m $n $k
             rm -f $logs/*.dasm $logs/*.txt
             rm -rf "$buildDir/dma_trace_00008_00000.log"
             cd $here

@@ -11,7 +11,6 @@
 # m
 # n
 # k
-# TRACE_DMA_ONLY // value of env var TRACE_DMA_ONLY
 
 buildDir=$1
 extractKernelTime=$2
@@ -24,7 +23,6 @@ m=$8
 n=$9
 k=${10}
 here=${11}
-traceDMAOnly=${12}
 elf=$(basename $gemmDir)
 
 
@@ -109,7 +107,7 @@ genTrace(){
 
 main(){
 
-    echo -e "\trun_and_extract_time2.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $traceDMAOnly"
+    echo -e "\trun_and_extract_time2.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k"
 
     cd $buildDir
     #correct=$($gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf --myrtleTimeout=5 > verify-output.txt; echo $?)
@@ -129,8 +127,11 @@ main(){
 
     # extract timing info: process all harts when compute-core traces were
     # generated (a TRACE_DMA_ONLY build only emits the DMA hart's .dasm file,
-    # in which case fall back to processing just that one)
-    if [[ "$traceDMAOnly" != "1" ]]; then
+    # in which case fall back to processing just that one). Detect this from
+    # the actual simulation output rather than trusting a possibly-stale
+    # TRACE_DMA_ONLY env var, since it has no enforced relationship to what
+    # the currently-loaded verilator model was actually compiled with.
+    if [[ -f "logs/trace_hart_00000.dasm" ]]; then
         genTrace logs "trace_hart_00000"
         genTrace logs "trace_hart_00001"
         genTrace logs "trace_hart_00002"
@@ -151,7 +152,7 @@ main(){
         rm -f logs/trace_hart_00008.dasm
         rm -f logs/trace_hart_0000[0-7].dasm
     fi
-    python $extractKernelTime $expName $logs $M $N $K $m $n $k $traceDMAOnly
+    python $extractKernelTime $expName $logs $M $N $K $m $n $k
     correct=$(echo $?)
     if [[ "$correct" == "0" ]];
     then
