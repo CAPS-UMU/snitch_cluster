@@ -140,6 +140,7 @@ main(){
         genTrace logs "trace_hart_00006"
         genTrace logs "trace_hart_00007"
         genTrace logs "trace_hart_00008" dma
+        ls -l -h logs/*.dasm
         rm -f logs/trace_hart_0000[0-8].dasm
     else
         gen_trace="$here/util/trace/gen_trace.py"
@@ -148,6 +149,7 @@ main(){
             --mc-exec $llvm_mc --mc-flags "-disassemble -mcpu=snitch" \
             --dump-hart-perf "$logs/hart-trace_hart_00008-perf.json" \
             -o /dev/null
+        ls -l -h logs/*.dasm
         rm -f logs/trace_hart_00008.dasm
         rm -f logs/trace_hart_0000[0-7].dasm
     fi
@@ -158,8 +160,10 @@ main(){
         echo -e "\trun_and_extract_time2.sh: Successfully exported timing information. Deleting logs..."
         # .dasm files already deleted above; clean up any other leftovers
         cd $logs
+        ls -l -h *.dasm *.txt 2>/dev/null
         rm -f *.dasm *.txt
         cd ..
+        ls -l -h *.dasm *.txt *.log 2>/dev/null
         rm -rf "dma_trace_00008_00000.log"
     else
         echo -e "\trun_and_extract_time2.sh: Error exporting timing info!"
