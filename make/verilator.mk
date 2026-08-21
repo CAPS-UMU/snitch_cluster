@@ -48,6 +48,7 @@ SN_VLT_RTL_PREREQ_FILE = $(SN_VLT_BUILDDIR)/$(SN_VLT_TOP_MODULE).d
 
 $(SN_VLT_BUILDDIR):
 	mkdir -p $@
+	echo "$(TRACE_DMA_ONLY)" >> $(SN_VLT_BUILDDIR)/traceDMAOnlyValDuringMake.txt
 
 # Generate RTL prerequisites
 $(eval $(call sn_gen_rtl_prerequisites,$(SN_VLT_RTL_PREREQ_FILE),$(SN_VLT_BUILDDIR),$(SN_VLT_BENDER_FLAGS),$(SN_VLT_TOP_MODULE),$(SN_BIN_DIR)/$(TARGET).vlt))
