@@ -63,7 +63,9 @@ timeout(){
             echo "Cycle-limit timeout (CYCLE_TIMEOUT=${CYCLE_TIMEOUT}) detected! Cleaning up process tree..."
             _kill_tree $PID_A
             EXIT_STATUS=1
-            echo "simulation failed on timeout." > verify-output.txt
+            echo "simulation failed on cycle timeout." > verify-output.txt
+            # Write the sentinel that combineTilingSchemeDataIntoSingleCSV.py looks for
+            echo "what():  Myrtle Experiment Timeout" >&2
             rm -rf "logs" "dma_trace_00008_00000.log"
             break
         fi
@@ -73,9 +75,7 @@ timeout(){
             echo "Wall-clock timeout after ${WALL_TIMEOUT}s! Cleaning up process tree..."
             _kill_tree $PID_A
             EXIT_STATUS=1
-            echo "simulation failed on timeout." > verify-output.txt
-            # Write the sentinel that combineTilingSchemeDataIntoSingleCSV.py looks for
-            echo "what():  Myrtle Experiment Timeout" >&2
+            echo "simulation failed on wall timeout $WALL_TIMEOUT seconds." > verify-output.txt
             rm -rf "logs" "dma_trace_00008_00000.log"
             break
         fi
@@ -110,7 +110,7 @@ genTrace(){
 main(){
 
     echo -e "\trun_and_extract_time2.sh: Arguments passed in are $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $traceDMAOnly"
-
+    start=$(date)
     cd $buildDir
     #correct=$($gemmDir/scripts/verify.py snitch_cluster.vlt $elf.elf --myrtleTimeout=5 > verify-output.txt; echo $?)
     timeout
@@ -155,6 +155,14 @@ main(){
     fi
     python $extractKernelTime $expName $logs $M $N $K $m $n $k $traceDMAOnly
     correct=$(echo $?)
+    # how long in wall time did the task take? vvvv
+    end=$(date)
+    # Convert both dates to seconds since Epoch (%s)
+    sec1=$(date -d "$start" +%s)
+    sec2=$(date -d "$end" +%s)
+    # Subtract
+    diff_seconds=$((sec2 - sec1))
+    # how long in wall time did the task take? ^^^^
     if [[ "$correct" == "0" ]];
     then
         echo -e "\trun_and_extract_time2.sh: Successfully exported timing information. Deleting logs..."
@@ -165,8 +173,10 @@ main(){
         cd ..
         ls -l -h *.dasm *.txt *.log 2>/dev/null
         rm -rf "dma_trace_00008_00000.log"
+        echo -e "\trun_and_extract_time2.sh: This task took: $diff_seconds seconds."
     else
         echo -e "\trun_and_extract_time2.sh: Error exporting timing info!"
+        echo -e "\trun_and_extract_time2.sh: This task took: $diff_seconds seconds."
     fi
 }
 

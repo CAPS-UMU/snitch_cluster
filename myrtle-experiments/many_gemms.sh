@@ -183,44 +183,81 @@ runAndExtract(){
     ss="$1"
     echo -e "\tmany_gemms.sh: RUN + EXPORT step"
     uniquePointRegex='^(([0-9]*)x([0-9]*)x([0-9]*))w([0-9]*)-([0-9]*)-([0-9]*)'
-    #batchSize=${SIM_BATCH_SIZE:-$(nproc)}
     batchSize=12
-    counter=0
-    echo -e "\t\tBatch size is $batchSize"
-    for ts in $(grep -oE $uniquePointRegex $ss)
-            do
-            eatNum='^([0-9])([0-9])*'
-            M=$(echo $ts | grep -oE $eatNum)
-            tail=${ts#*x}
-            N=$(echo $tail | grep -oE $eatNum)
-            tail=${tail#*x}
-            K=$(echo $tail | grep -oE $eatNum)
-            tail=${tail#*w}
-            m=$(echo $tail | grep -oE $eatNum)
-            tail=${tail#*-}
-            n=$(echo $tail | grep -oE $eatNum)
-            tail=${tail#*-}
-            k=$(echo $tail | grep -oE $eatNum)
-            expName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
-            buildDir="$experimentDir/$expName/build"
-            logs="$buildDir/logs"
-            exists=$(ls $buildDir &> /dev/null; echo $?)
-            if [[ "$exists" != "0" ]]; 
-            then
-                echo -e "\tmany_gemms.sh: Error: $buildDir dir does not exist. Skipping $M $N $K w $m $n $k."
+    echo -e "\t\tConcurrent pool size is $batchSize"
+
+    # Associative array to hold active PIDs: active_pids[PID]="expName"
+    declare -A active_pids=()
+
+    for ts in $(grep -oE $uniquePointRegex $ss); do
+        eatNum='^([0-9])([0-9])*'
+        M=$(echo $ts | grep -oE $eatNum)
+        tail=${ts#*x}
+        N=$(echo $tail | grep -oE $eatNum)
+        tail=${tail#*x}
+        K=$(echo $tail | grep -oE $eatNum)
+        tail=${tail#*w}
+        m=$(echo $tail | grep -oE $eatNum)
+        tail=${tail#*-}
+        n=$(echo $tail | grep -oE $eatNum)
+        tail=${tail#*-}
+        k=$(echo $tail | grep -oE $eatNum)
+        expName=$M"x"$N"x"$K"w"$m"-"$n"-"$k
+        buildDir="$experimentDir/$expName/build"
+        logs="$buildDir/logs"
+
+        if [[ ! -d "$buildDir" ]]; then
+            echo -e "\tmany_gemms.sh: Error: $buildDir dir does not exist. Skipping $M $N $K w $m $n $k."
+            continue
+        fi
+
+        # If pool is full, wait for any ONE job to finish before launching the next
+        if (( ${#active_pids[@]} >= batchSize )); then
+            if (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1) )); then
+                # Bash 5.1+: -p stores the finished PID directly
+                wait -n -p finished_pid "${!active_pids[@]}"
+                echo -e "\t\t--- Job completed: ${active_pids[$finished_pid]} (PID $finished_pid) ---"
+                unset "active_pids[$finished_pid]"
             else
-                echo -e "\t\t About to run $M $N $K $m $n $k with build directory $buildDir"
-                # run gemm
-                # nohup bash test.sh $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k &> "$buildDir/test.txt" & 
-                nohup bash "$here/run_and_extract_time2.sh" $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $rootDir $TRACE_DMA_ONLY &> "$buildDir/output.txt" & 
-                counter=$((counter+1))
-            fi 
-            if (( $counter % $batchSize == 0 )); then
-                wait
-                echo -e "\t\tstarting new batch..."
-                fi       
+                # Bash 4.3 – 5.0 fallback
+                wait -n "${!active_pids[@]}"
+                for pid in "${!active_pids[@]}"; do
+                    if ! kill -0 "$pid" 2>/dev/null; then
+                        echo -e "\t\t--- Job completed: ${active_pids[$pid]} (PID $pid) ---"
+                        unset "active_pids[$pid]"
+                    fi
+                done
+            fi
+        fi
+
+        echo -e "\t\t About to run $M $N $K $m $n $k with build directory $buildDir"
+
+        nohup bash "$here/run_and_extract_time2.sh" \
+            $buildDir $extractKernelTime $expName $logs $M $N $K $m $n $k $rootDir $TRACE_DMA_ONLY \
+            &> "$buildDir/output.txt" &
+        
+        # Track the PID and experiment name
+        active_pids[$!]="$expName"
+    done
+
+    # Wait for remaining jobs and announce each as it finishes
+    while (( ${#active_pids[@]} > 0 )); do
+        if (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1) )); then
+            wait -n -p finished_pid "${!active_pids[@]}"
+            echo -e "\t\t--- Job completed: ${active_pids[$finished_pid]} (PID $finished_pid) ---"
+            unset "active_pids[$finished_pid]"
+        else
+            wait -n "${!active_pids[@]}"
+            for pid in "${!active_pids[@]}"; do
+                if ! kill -0 "$pid" 2>/dev/null; then
+                    echo -e "\t\t--- Job completed: ${active_pids[$pid]} (PID $pid) ---"
+                    unset "active_pids[$pid]"
+                fi
             done
-    wait
+        fi
+    done
+
+    echo -e "\t\tAll jobs completed."
 }
 
 onlyExtract(){
